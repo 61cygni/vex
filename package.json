@@ -1,0 +1,18 @@
+{
+  "name": "vex",
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "rm -rf dist && tsc && vite build",
+    "clean": "",
+    "serve": "vite preview"
+  },
+  "dependencies": {
+    "bootstrap": "^5.0.2",
+    "convex-dev": "0.1.4"
+  },
+  "devDependencies": {
+    "@types/node": "~16.11.12",
+    "vite": "^2.3.8"
+  }
+}

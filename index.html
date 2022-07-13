@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hello Convex!</title>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script src="/src/pixi.min.js"></script>
+    <script type="module">
+
+    import { InternalConvexClient, ConvexHttpClient } from "convex-dev/browser";
+    import convexConfig from "/convex.json";
+
+
+    let MAP_WIDTH_CHAR   = 64;
+    let MAP_HEIGHT_CHAR  = 40;
+    let MAP_FONT_SIZE    = 16; // px  
+    let SCREEN_WIDTH     = 1024;
+    let SCREEN_HEIGHT    = 768;
+
+	// figure out character / pixel conversion through trial and error
+    let FONT_PIXEL_W = 11;
+    let FONT_PIXEL_H = 18;
+
+    let MAP_X_OFFSET = Math.floor((SCREEN_WIDTH - (FONT_PIXEL_W*(MAP_WIDTH_CHAR/2))) / 2);
+    let MAP_Y_OFFSET = FONT_PIXEL_H;
+
+    const textsty = new PIXI.TextStyle({
+      fontFamily: "Courier",
+      fontSize: MAP_FONT_SIZE,
+      fill: "green",
+      letterSpacing : 2,
+    });
+
+
+    const convexhttp = new ConvexHttpClient(convexConfig.origin);
+    const internal   = new InternalConvexClient(convexConfig.origin, updatedQueries => reactive_update(updatedQueries));
+
+    let type = "WebGL";
+    if (!PIXI.utils.isWebGLSupported()) {
+        type = "canvas";
+    }
+
+    PIXI.utils.sayHello(type);
+
+    //Create a Pixi Application
+    const app = new PIXI.Application({width: SCREEN_WIDTH, height: SCREEN_HEIGHT});
+
+
+
+    // //Add the canvas that Pixi automatically created for you to the HTML document
+    document.body.appendChild(app.view);
+
+    
+    let rand_banner = "(rand map)";
+    let hero_char   = "@";
+
+    let cur_map   = null;
+    let pixi_map  = null;
+    let pixi_hero = null;
+
+    set_rand_banner();
+    set_map();
+    set_hero();
+    set_pixi_key_hooks();
+
+    // get notified on any changed to the following query. Changes will
+    // call "reactive_update"
+    const { queryToken, unsubscribe } = internal.subscribe("getMap", []);
+
+	// pixi_setup(); // set up pixi, and start game loop
+
+// Pixi functions
+
+
+function set_rand_banner() {
+    const randsty = new PIXI.TextStyle({
+      fontFamily: "Courier",
+      fontSize: MAP_FONT_SIZE,
+      fill: "red",
+      fontWeight : "bolder"
+    });
+
+    let pixi_rand = new PIXI.Text(rand_banner, randsty);
+    pixi_rand.x = 32;
+    pixi_rand.y = 32;
+    pixi_rand.interactive = true;
+    pixi_rand.on('pointerdown', (event) => { rand_clicked(); });
+
+    app.stage.addChild(pixi_rand);
+}
+
+function set_hero() {
+    const herosty = new PIXI.TextStyle({
+      fontFamily: "Courier",
+      fontSize: MAP_FONT_SIZE,
+      fill: "yellow",
+      fontWeight : "bolder"
+    });
+
+    pixi_hero = new PIXI.Text(hero_char, herosty);
+    pixi_hero.interactive = true;
+
+
+
+    app.stage.addChild(pixi_hero);
+}
+
+
+function set_pixi_key_hooks() {
+    //Capture the keyboard arrow keys
+      const left = keyboard("ArrowLeft"),
+      up = keyboard("ArrowUp"),
+      right = keyboard("ArrowRight"),
+      down = keyboard("ArrowDown");   
+
+      right.press = () => {
+        let new_x = pixi_hero.map_x + 1;
+        let new_y = pixi_hero.map_y;
+        let map_index = (new_y * (MAP_WIDTH_CHAR+1)) + new_x;
+        if(cur_map[map_index] != '#'){
+            console.log(cur_map[new_x][new_y] );
+            pixi_hero.map_x = new_x; 
+            update_hero_px_loc();
+        }
+      };
+      left.press = () => {
+        let new_x = pixi_hero.map_x - 1;
+        let new_y = pixi_hero.map_y;
+        let map_index = (new_y * (MAP_WIDTH_CHAR+1)) + new_x;
+
+        if(cur_map[map_index] != '#'){
+            pixi_hero.map_x = pixi_hero.map_x - 1;
+            update_hero_px_loc();
+        }
+      };
+      up.press = () => {
+        let new_x = pixi_hero.map_x;
+        let new_y = pixi_hero.map_y - 1;
+        let map_index = (new_y * (MAP_WIDTH_CHAR+1)) + new_x;
+
+        if(cur_map[map_index] != '#'){
+            pixi_hero.map_y = pixi_hero.map_y - 1;
+            update_hero_px_loc();
+        }
+      };
+      down.press = () => {
+        let new_x = pixi_hero.map_x;
+        let new_y = pixi_hero.map_y + 1;
+        let map_index = (new_y * (MAP_WIDTH_CHAR+1)) + new_x;
+
+        if(cur_map[map_index] != '#'){
+            pixi_hero.map_y = pixi_hero.map_y + 1;
+            update_hero_px_loc();
+        }
+      };
+}
+
+function update_hero_px_loc(){
+    let px_loc = map_map_index_to_pixel(pixi_hero.map_x, pixi_hero.map_y);
+    pixi_hero.x = px_loc[0];
+    pixi_hero.y = px_loc[1];
+    console.log("hero x "+pixi_hero.map_x+" : hero y "+pixi_hero.map_y);
+}
+
+function map_map_index_to_pixel(x, y){
+    // It seems characters are offset by a pixel every 4 pixels .. so
+    let fudge = .6;
+    let px_x  = MAP_X_OFFSET + (x * FONT_PIXEL_W) + Math.floor(fudge*x);
+    let px_y  = MAP_Y_OFFSET + (y * FONT_PIXEL_H);
+    return [px_x,px_y];
+}
+
+function pixi_draw_map() {
+
+    if (pixi_map == null) {
+	  pixi_map = new PIXI.Text(cur_map, textsty);
+    } else {
+      pixi_map.text = cur_map;
+    }
+      pixi_map.interactive = true;
+
+      MAP_X_OFFSET = Math.floor((SCREEN_WIDTH - pixi_map.width) / 2);
+      MAP_Y_OFFSET = FONT_PIXEL_H; // magic! 
+
+
+      pixi_map.x = MAP_X_OFFSET;
+      pixi_map.y = MAP_Y_OFFSET;
+
+	  app.stage.addChild(pixi_map);
+
+      // choose a random location for the hero
+      let map_size = (MAP_WIDTH_CHAR+1) * MAP_HEIGHT_CHAR; 
+      let loc = 0; 
+      while(pixi_map.text[loc] != ' '){
+          loc = Math.floor(Math.random() * map_size);
+          pixi_hero.map_y = Math.floor(loc / (MAP_WIDTH_CHAR+1));
+          pixi_hero.map_x = loc - (pixi_hero.map_y * (MAP_WIDTH_CHAR+1)); 
+          console.log("loc "+loc+" : " + cur_map[loc]);
+          console.log("map_x "+pixi_hero.map_x+" : map_y" + pixi_hero.map_y);
+      }
+
+      update_hero_px_loc();
+	 
+	  //Start the "game loop"
+	  app.ticker.add((delta) => gameLoop(delta));
+}
+
+function rand_clicked() {
+    console.log("rand clicked!");
+    set_new_map();
+}
+
+function setCharAt(str,index,chr) {
+    if(index > str.length-1) return str;
+    return str.substring(0,index) + chr + str.substring(index+1);
+}
+
+function setCharXY(map, x, y, chr) {
+  return setCharAt(map, x + (y*(MAP_WIDTH_CHAR+1)), chr); 
+}
+
+// Use Bresenham's line drawing algorithm to make a walkway between two
+// rooms. 
+function create_walkway(map, c1, c2) {
+    let x1 = c1[0]; let x2 = c2[0]; let y1 = c1[1]; let y2 = c2[1];
+    let dx = Math.abs(x2 - x1); 
+    let sx = (x1 < x2) ? 1 : -1;
+    let dy = -Math.abs(y2 - y1);
+    let sy = (y1 < y2) ? 1: -1;
+    let error = dx + dy;
+
+	while (true) {
+        map = setCharXY(map,x1, y1,' ');
+        map = setCharXY(map,x1+1, y1,' ');
+        map = setCharXY(map,x1, y1+1,' ');
+        map = setCharXY(map,x1+1, y1+1,' ');
+        if(x1 == x2 && y1 == y2){
+          break;
+        }
+        let e2 = 2 * error;
+        if( e2 >= dy){
+            if(x1 == x2){ 
+              break;
+            }
+            error = error + dy;
+            x1 = x1 + sx;
+        } 
+        if(e2 <= dx){
+            if( y1 == y2){
+               break;
+            }
+            error = error + dx;
+            y1 = y1 + sy;
+        }
+    }
+    return map;
+}
+
+function set_new_map(){
+    let new_map = generate_new_map();
+
+    console.log('Setting new map');
+    const res = convexhttp.mutation("setMap")(new_map, true);
+    res.then(update_success, update_failure);
+}
+
+function generate_new_map(){
+
+  let new_map   = "";
+  let room_list = [];
+  
+  for (let y = 0; y < MAP_HEIGHT_CHAR; y++){
+      for (let x = 0; x < MAP_WIDTH_CHAR; x++){
+        new_map += "#";
+      }
+        new_map += "\n";
+  }
+
+  let number_of_rooms = Math.ceil((Math.random() * 16) + 6);
+
+  for (let rooms = 0; rooms < number_of_rooms; rooms++) {
+
+      // generate a random room  (12 is a magic number for max size)
+      let rand_room_w = Math.floor((Math.random() * 12) + 4);
+      let rand_room_h = Math.floor((Math.random() * 12) + 4);
+      let rand_room_x = 1 + Math.floor((Math.random() * (MAP_WIDTH_CHAR -  (rand_room_w + 1))));
+      let rand_room_y = 1 + Math.floor((Math.random() * (MAP_HEIGHT_CHAR - (rand_room_h + 1))));
+
+
+      let center_x = Math.floor(rand_room_x + (rand_room_w / 2));
+      let center_y = Math.floor(rand_room_y + (rand_room_h / 2));
+      room_list.push([center_x, center_y]);
+
+      console.log("Rand w: " + rand_room_w + " Rand h: " + rand_room_h);
+      console.log("Rand x: " + rand_room_x + " Rand y: " + rand_room_y);
+      console.log("Cent x: " + center_x + "  Cent y: " + center_y);
+
+      for (let x = rand_room_x; x < rand_room_w + rand_room_x; x++){
+          for (let y = rand_room_y; y < (rand_room_h + rand_room_y); y++){
+              new_map = setCharXY(new_map, x, y, ' '); 
+          }
+      }
+
+      if (rooms >= 1) {
+        // make path between rooms
+        new_map = create_walkway(new_map, room_list[room_list.length - 1], room_list[room_list.length - 2]);
+      }
+
+  } // number of rooms
+
+  return new_map;
+}
+
+function keyboard(value) {
+  const key = {};
+  key.value = value;
+  key.isDown = false;
+  key.isUp = true;
+  key.press = undefined;
+  key.release = undefined;
+  //The `downHandler`
+  key.downHandler = (event) => {
+    if (event.key === key.value) {
+      if (key.isUp && key.press) {
+        key.press();
+      }
+      key.isDown = true;
+      key.isUp = false;
+      event.preventDefault();
+    }
+  };
+
+  //The `upHandler`
+  key.upHandler = (event) => {
+    if (event.key === key.value) {
+      if (key.isDown && key.release) {
+        key.release();
+      }
+      key.isDown = false;
+      key.isUp = true;
+      event.preventDefault();
+    }
+  };
+
+  //Attach event listeners
+  const downListener = key.downHandler.bind(key);
+  const upListener = key.upHandler.bind(key);
+  
+  window.addEventListener("keydown", downListener, false);
+  window.addEventListener("keyup", upListener, false);
+  
+  // Detach event listeners
+  key.unsubscribe = () => {
+    window.removeEventListener("keydown", downListener);
+    window.removeEventListener("keyup", upListener);
+  };
+  
+  return key;
+}
+
+function gameLoop(delta) {
+
+  
+}
+
+// convex functions 
+
+function set_map() {
+    console.log('Setting initial map');
+    let initial_map = generate_new_map();
+    const res = convexhttp.mutation("setMap")(initial_map,false);
+    res.then(update_success, update_failure);
+}
+
+function reactive_update (updatedQueries) {
+    console.log("Change to map!");
+    get_cur_map();
+}
+
+function map_query_success(m) {
+    console.log("Successfully retrieved map ");
+    cur_map = m;
+    console.log(cur_map);
+    pixi_draw_map();
+}
+
+function map_query_failure () {
+    console.log("Failed to retrieve map");
+}
+
+function update_success () {
+    console.log("Successfully updated initial map");
+    get_cur_map();
+}
+
+function update_failure () {
+    console.log("Failed to update initial map");
+}
+
+function get_cur_map(){
+    const val = convexhttp.query("getMap")();
+    val.then(map_query_success, map_query_failure);
+}
+
+
+  </script>
+  </body>
+</html>
