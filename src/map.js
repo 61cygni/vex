@@ -91,7 +91,8 @@ function set_initial_map() {
     res.then(map_update_success, map_update_failure);
 }
 
-function reactive_update (updatedQueries) {
+
+function reactive_update_map (updatedQueries) {
     console.log("Change to map!");
     get_cur_map();
 }
@@ -123,11 +124,14 @@ function map_map_index_to_pixel(x, y){
 }
 
 
-function update_hero_px_loc(){
+function update_hero_px_loc(push){
     let px_loc = map_map_index_to_pixel(g_pixi_hero.map_x, g_pixi_hero.map_y);
     g_pixi_hero.x = px_loc[0];
     g_pixi_hero.y = px_loc[1];
     console.log("hero x "+g_pixi_hero.map_x+" : hero y "+g_pixi_hero.map_y);
+    if(push == true){
+        update_hero(g_pixi_hero);
+    }
 }
 
 function pixi_draw_map() {
@@ -159,8 +163,6 @@ function pixi_draw_map() {
           console.log("map_x "+g_pixi_hero.map_x+" : map_y" + g_pixi_hero.map_y);
       }
 
-      update_hero_px_loc();
-	 
 	  //Start the "game loop"
 	  g_app.ticker.add((delta) => gameLoop(delta));
 }
@@ -226,7 +228,7 @@ function set_pixi_key_hooks() {
         if(cur_map[map_index] != '#'){
             console.log(cur_map[new_x][new_y] );
             g_pixi_hero.map_x = new_x; 
-            update_hero_px_loc();
+            update_hero_px_loc(true);
         }
       };
       left.press = () => {
@@ -236,7 +238,7 @@ function set_pixi_key_hooks() {
 
         if(cur_map[map_index] != '#'){
             g_pixi_hero.map_x = g_pixi_hero.map_x - 1;
-            update_hero_px_loc();
+            update_hero_px_loc(true);
         }
       };
       up.press = () => {
@@ -246,7 +248,7 @@ function set_pixi_key_hooks() {
 
         if(cur_map[map_index] != '#'){
             g_pixi_hero.map_y = g_pixi_hero.map_y - 1;
-            update_hero_px_loc();
+            update_hero_px_loc(true);
         }
       };
       down.press = () => {
@@ -256,7 +258,7 @@ function set_pixi_key_hooks() {
 
         if(cur_map[map_index] != '#'){
             g_pixi_hero.map_y = g_pixi_hero.map_y + 1;
-            update_hero_px_loc();
+            update_hero_px_loc(true);
         }
       };
 }

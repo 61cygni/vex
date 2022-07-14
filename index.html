@@ -10,6 +10,7 @@
 
     <script src="/thirdparty/pixi.min.js"></script>
     <script src="/src/map.js"></script>
+    <script src="/src/hero.js"></script>
     <script type="module">
 
     import { InternalConvexClient, ConvexHttpClient } from "convex-dev/browser";
@@ -23,16 +24,19 @@
     document.body.appendChild(app.view);
 
     // CONVEX global initialization
-    const convexhttp = new ConvexHttpClient(convexConfig.origin);
-    const internal   = new InternalConvexClient(convexConfig.origin, updatedQueries => reactive_update(updatedQueries));
+    const convexhttp      = new ConvexHttpClient(convexConfig.origin);
+    const convexhttp_hero = new ConvexHttpClient(convexConfig.origin);
+    const internal_map    = new InternalConvexClient(convexConfig.origin, updatedQueries => reactive_update_map(updatedQueries));
+    const internal_hero    = new InternalConvexClient(convexConfig.origin, updatedQueries => reactive_update_hero(updatedQueries));
 
     set_g_convex_http_client_map(convexhttp);
-    set_g_convex_internal_client_map(internal);
+    set_g_convex_http_client_hero(convexhttp_hero);
+    set_g_convex_internal_client_map(internal_map);
 
     // get notified on any changed to the following query. Changes will
     // call "reactive_update"
-    const { queryToken, unsubscribe } = internal.subscribe("getMap", []);
-
+    const { queryTokenMap, unsubscribeMap }   = internal_map.subscribe("getMap", []);
+    const { queryTokenHero, unsubscribeHero } = internal_hero.subscribe("getHero", []);
 
     let hero_char   = "@";
 
@@ -43,24 +47,28 @@
     set_rand_banner();
     // first map
     set_initial_map();
-    // create hero and place on map
+    // TODO need to move set_hero to src/hero.js 
     set_hero();
+    set_initial_hero(pixi_hero);
 
+    function set_hero() {
+        const herosty = new PIXI.TextStyle({
+          fontFamily: "Courier",
+          fontSize: MAP_FONT_SIZE,
+          fill: "yellow",
+          fontWeight : "bolder"
+        });
 
-function set_hero() {
-    const herosty = new PIXI.TextStyle({
-      fontFamily: "Courier",
-      fontSize: MAP_FONT_SIZE,
-      fill: "yellow",
-      fontWeight : "bolder"
-    });
+        pixi_hero = new PIXI.Text(hero_char, herosty);
+        pixi_hero.interactive = true;
+        set_g_pixi_hero_map(pixi_hero);
+        set_g_pixi_hero_hero(pixi_hero);
 
-    pixi_hero = new PIXI.Text(hero_char, herosty);
-    pixi_hero.interactive = true;
-    set_g_pixi_hero_map(pixi_hero);
+        app.stage.addChild(pixi_hero);
+    }
 
-    app.stage.addChild(pixi_hero);
-}
+    update_hero(pixi_hero);
+
 
 
   </script>
