@@ -3,22 +3,6 @@ import convexConfig from "/convex.json";
 
 import {set_initial_hero_in_db, update_hero} from "/src/hero.js"
 
-export let MAP_FONT_SIZE    = 16; // px  
-
-let MAP_WIDTH_CHAR   = 64;  
-let MAP_HEIGHT_CHAR  = 40;
-let SCREEN_WIDTH     = 1024; // px
-let SCREEN_HEIGHT    = 768;
-
-// font widths in pixels. Figured out through trial and error .. so
-// clearly brittle 
-let FONT_PIXEL_W = 11;
-let FONT_PIXEL_H = 18;
-
-// Upper left corner of map on the screen
-let MAP_X_OFFSET = Math.floor((SCREEN_WIDTH - (FONT_PIXEL_W*(MAP_WIDTH_CHAR/2))) / 2);
-let MAP_Y_OFFSET = FONT_PIXEL_H;
-
 const convexhttp      = new ConvexHttpClient(convexConfig.origin);
 const internal_map    = new InternalConvexClient(convexConfig.origin, updatedQueries => reactive_update_map(updatedQueries));
 const { queryTokenMap, unsubscribeMap }   = internal_map.subscribe("getMap", []);

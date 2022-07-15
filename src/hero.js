@@ -1,7 +1,7 @@
 import { InternalConvexClient, ConvexHttpClient } from "convex-dev/browser";
 import convexConfig from "/convex.json";
 
-import {MAP_FONT_SIZE, update_local_hero_px_loc} from "/src/map.js"
+import {update_local_hero_px_loc} from "/src/map.js"
 
 let hero_char   = "@";
 
