@@ -20,6 +20,7 @@
     // PIXI global initialization. 
     const app = vex_init_pixi(); // defined in src/map.js 
     set_g_app_map(app);
+    set_g_app_hero(app);
     // //Add the canvas that Pixi automatically created for you to the HTML document
     document.body.appendChild(app.view);
 
@@ -36,9 +37,8 @@
     // get notified on any changed to the following query. Changes will
     // call "reactive_update"
     const { queryTokenMap, unsubscribeMap }   = internal_map.subscribe("getMap", []);
-    const { queryTokenHero, unsubscribeHero } = internal_hero.subscribe("getHero", []);
+    const { queryTokenHero, unsubscribeHero } = internal_hero.subscribe("listHeros", []);
 
-    let hero_char   = "@";
 
     let cur_map   = null;
     let pixi_hero = null;
@@ -47,28 +47,12 @@
     set_rand_banner();
     // first map
     set_initial_map();
-    // TODO need to move set_hero to src/hero.js 
-    set_hero();
-    set_initial_hero(pixi_hero);
 
-    function set_hero() {
-        const herosty = new PIXI.TextStyle({
-          fontFamily: "Courier",
-          fontSize: MAP_FONT_SIZE,
-          fill: "yellow",
-          fontWeight : "bolder"
-        });
+    pixi_hero = init_pixi_hero("yellow");
+    set_g_pixi_hero_map(pixi_hero);
+    set_g_pixi_hero_hero(pixi_hero);
 
-        pixi_hero = new PIXI.Text(hero_char, herosty);
-        pixi_hero.interactive = true;
-        set_g_pixi_hero_map(pixi_hero);
-        set_g_pixi_hero_hero(pixi_hero);
-
-        app.stage.addChild(pixi_hero);
-    }
-
-    update_hero(pixi_hero);
-
+    app.stage.addChild(pixi_hero);
 
 
   </script>

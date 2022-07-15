@@ -17,7 +17,7 @@ let MAP_Y_OFFSET = FONT_PIXEL_H;
 // pointers to globals
 let g_convexhttp     = null;
 let g_convexinternal = null;
-let g_app        = null;
+let g_app_map        = null;
 let g_pixi_hero  = null;
 
 let pixi_map  = null;
@@ -42,7 +42,7 @@ function set_g_convex_internal_client_map(gi) {
 }
 
 function set_g_app_map(app) {
-    g_app = app;
+    g_app_map = app;
 }
 
 function set_g_pixi_hero_map(hero) {
@@ -72,6 +72,11 @@ function map_update_success () {
     get_cur_map();
 }
 
+function initial_map_update_success () {
+    console.log("Successfully updated initial map");
+    get_initial_map();
+}
+
 function map_update_failure () {
     console.log("Failed to update initial map");
 }
@@ -88,7 +93,7 @@ function set_initial_map() {
     console.log('Setting initial map');
     let initial_map = generate_new_map();
     const res = g_convexhttp.mutation("setMap")(initial_map,false);
-    res.then(map_update_success, map_update_failure);
+    res.then(initial_map_update_success, map_update_failure);
 }
 
 
@@ -112,7 +117,7 @@ function set_rand_banner() {
     pixi_rand.interactive = true;
     pixi_rand.on('pointerdown', (event) => { rand_clicked(); });
 
-    g_app.stage.addChild(pixi_rand);
+    g_app_map.stage.addChild(pixi_rand);
 }
 
 function map_map_index_to_pixel(x, y){
@@ -134,6 +139,13 @@ function update_hero_px_loc(push){
     }
 }
 
+function update_local_hero_px_loc(local_hero){
+    let px_loc = map_map_index_to_pixel(local_hero.map_x, local_hero.map_y);
+    local_hero.x = px_loc[0];
+    local_hero.y = px_loc[1];
+    console.log("local hero x "+g_pixi_hero.map_x+" : local hero y "+g_pixi_hero.map_y);
+}
+
 function pixi_draw_map() {
 
     if (pixi_map == null) {
@@ -150,7 +162,7 @@ function pixi_draw_map() {
       pixi_map.x = MAP_X_OFFSET;
       pixi_map.y = MAP_Y_OFFSET;
 
-	  g_app.stage.addChild(pixi_map);
+	  g_app_map.stage.addChild(pixi_map);
 
       // choose a random location for the hero
       let map_size = (MAP_WIDTH_CHAR+1) * MAP_HEIGHT_CHAR; 
@@ -163,8 +175,9 @@ function pixi_draw_map() {
           console.log("map_x "+g_pixi_hero.map_x+" : map_y" + g_pixi_hero.map_y);
       }
 
+      update_hero_px_loc(true);
 	  //Start the "game loop"
-	  g_app.ticker.add((delta) => gameLoop(delta));
+	  g_app_map.ticker.add((delta) => gameLoop(delta));
 }
 
 function keyboard(value) {
@@ -268,6 +281,14 @@ function gameLoop(delta) {
   
 }
 
+function initial_map_query_success(m) {
+    console.log("Successfully retrieved map ");
+    cur_map = m;
+    console.log(cur_map);
+    pixi_draw_map();
+    set_initial_hero_in_db();
+}
+
 function map_query_success(m) {
     console.log("Successfully retrieved map ");
     cur_map = m;
@@ -277,6 +298,11 @@ function map_query_success(m) {
 
 function map_query_failure () {
     console.log("Failed to retrieve map");
+}
+
+function get_initial_map(){
+    const val = g_convexhttp.query("getMap")();
+    val.then(initial_map_query_success, map_query_failure);
 }
 
 function get_cur_map(){
@@ -319,10 +345,6 @@ function generate_new_map(){
       let center_x = Math.floor(rand_room_x + (rand_room_w / 2));
       let center_y = Math.floor(rand_room_y + (rand_room_h / 2));
       room_list.push([center_x, center_y]);
-
-      console.log("Rand w: " + rand_room_w + " Rand h: " + rand_room_h);
-      console.log("Rand x: " + rand_room_x + " Rand y: " + rand_room_y);
-      console.log("Cent x: " + center_x + "  Cent y: " + center_y);
 
       for (let x = rand_room_x; x < rand_room_w + rand_room_x; x++){
           for (let y = rand_room_y; y < (rand_room_h + rand_room_y); y++){

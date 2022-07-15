@@ -1,20 +1,25 @@
 import { mutation } from "./_generated/server";
 
 // Set the map 
-export default mutation(async ({ db }, icon: string, x : number, y : number ) => {
+export default mutation(async ({ db }, id : Id, icon: string, x : number, y : number ) => {
 
-  console.log("setHero");
+  console.log("setHero: " + id);
   const hero = { icon, x, y, };
 
-  let oldhero = await db.table("the_hero").first();
+  let hero_list = await db.table("the_hero").collect();
 
-  if (oldhero === null) {
-    console.log("Inserting new hero");
-    db.insert("the_hero", hero);
-  } else {
-    console.log("Updating hero");
-    db.replace(oldhero._id, hero);
-  } 
+  for (let index = 0; index < hero_list.length; index++) {
+    if(""+hero_list[index]._id == ""+id){
+        console.log("Found hero, updating");
+        db.replace(hero_list[index]._id, hero);
+        return hero_list[index]._id;
+    }
+  }
+
+  return 0;
+
+  console.log("Inserting new hero "+icon);
+  db.insert("the_hero", hero);
 
 });
 
