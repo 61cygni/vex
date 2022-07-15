@@ -9,38 +9,24 @@
     <div id="root"></div>
 
     <script src="/thirdparty/pixi.min.js"></script>
-    <script src="/src/map.js"></script>
-    <script src="/src/hero.js"></script>
+    <script type="module" src="/src/map.js"></script>
+    <script type="module" src="/src/hero.js"></script>
     <script type="module">
 
     import { InternalConvexClient, ConvexHttpClient } from "convex-dev/browser";
     import convexConfig from "/convex.json";
+    import { set_g_pixi_hero_map, reactive_update_map, set_initial_map, set_rand_banner,  vex_init_pixi, set_g_app_map} from "/src/map.js";
+    import { reactive_update_hero, init_pixi_hero, set_g_pixi_hero_hero, set_g_app_hero} from "/src/hero.js";
 
 
     // PIXI global initialization. 
-    const app = vex_init_pixi(); // defined in src/map.js 
-    set_g_app_map(app);
-    set_g_app_hero(app);
+    const g_app = vex_init_pixi(); // defined in src/map.js 
+    set_g_app_map(g_app);
+    set_g_app_hero(g_app);
+
     // //Add the canvas that Pixi automatically created for you to the HTML document
-    document.body.appendChild(app.view);
+    document.body.appendChild(g_app.view);
 
-    // CONVEX global initialization
-    const convexhttp      = new ConvexHttpClient(convexConfig.origin);
-    const convexhttp_hero = new ConvexHttpClient(convexConfig.origin);
-    const internal_map    = new InternalConvexClient(convexConfig.origin, updatedQueries => reactive_update_map(updatedQueries));
-    const internal_hero    = new InternalConvexClient(convexConfig.origin, updatedQueries => reactive_update_hero(updatedQueries));
-
-    set_g_convex_http_client_map(convexhttp);
-    set_g_convex_http_client_hero(convexhttp_hero);
-    set_g_convex_internal_client_map(internal_map);
-
-    // get notified on any changed to the following query. Changes will
-    // call "reactive_update"
-    const { queryTokenMap, unsubscribeMap }   = internal_map.subscribe("getMap", []);
-    const { queryTokenHero, unsubscribeHero } = internal_hero.subscribe("listHeros", []);
-
-
-    let cur_map   = null;
     let pixi_hero = null;
 
     // setup left hand sidebar
@@ -52,7 +38,7 @@
     set_g_pixi_hero_map(pixi_hero);
     set_g_pixi_hero_hero(pixi_hero);
 
-    app.stage.addChild(pixi_hero);
+    g_app.stage.addChild(pixi_hero);
 
 
   </script>

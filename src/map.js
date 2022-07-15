@@ -1,7 +1,12 @@
+import { InternalConvexClient, ConvexHttpClient } from "convex-dev/browser";
+import convexConfig from "/convex.json";
+
+import {set_initial_hero_in_db, update_hero} from "/src/hero.js"
+
+export let MAP_FONT_SIZE    = 16; // px  
 
 let MAP_WIDTH_CHAR   = 64;  
 let MAP_HEIGHT_CHAR  = 40;
-let MAP_FONT_SIZE    = 16; // px  
 let SCREEN_WIDTH     = 1024; // px
 let SCREEN_HEIGHT    = 768;
 
@@ -14,11 +19,14 @@ let FONT_PIXEL_H = 18;
 let MAP_X_OFFSET = Math.floor((SCREEN_WIDTH - (FONT_PIXEL_W*(MAP_WIDTH_CHAR/2))) / 2);
 let MAP_Y_OFFSET = FONT_PIXEL_H;
 
+const convexhttp      = new ConvexHttpClient(convexConfig.origin);
+const internal_map    = new InternalConvexClient(convexConfig.origin, updatedQueries => reactive_update_map(updatedQueries));
+const { queryTokenMap, unsubscribeMap }   = internal_map.subscribe("getMap", []);
+
 // pointers to globals
-let g_convexhttp     = null;
-let g_convexinternal = null;
 let g_app_map        = null;
 let g_pixi_hero  = null;
+let cur_map    = null;
 
 let pixi_map  = null;
 
@@ -33,23 +41,16 @@ let map_sty = new PIXI.TextStyle({
 // Menu for side panels
 let rand_banner = "(rand map)";
 
-function set_g_convex_http_client_map(gh) {
-    g_convexhttp = gh;
-}
 
-function set_g_convex_internal_client_map(gi) {
-    g_convexinternal = gi;
-}
-
-function set_g_app_map(app) {
+export function set_g_app_map(app) {
     g_app_map = app;
 }
 
-function set_g_pixi_hero_map(hero) {
+export function set_g_pixi_hero_map(hero) {
     g_pixi_hero = hero;
 }
 
-function vex_init_pixi() {
+export function vex_init_pixi() {
     console.log("[vex:map.js] initializing pixi");
     let type = "WebGL";
     if (!PIXI.utils.isWebGLSupported()) {
@@ -85,25 +86,25 @@ function set_new_map(){
     let new_map = generate_new_map();
 
     console.log('Setting new map');
-    const res = g_convexhttp.mutation("setMap")(new_map, true);
+    const res = convexhttp.mutation("setMap")(new_map, true);
     res.then(map_update_success, map_update_failure);
 }
 
-function set_initial_map() {
+export function set_initial_map() {
     console.log('Setting initial map');
     let initial_map = generate_new_map();
-    const res = g_convexhttp.mutation("setMap")(initial_map,false);
+    const res = convexhttp.mutation("setMap")(initial_map,false);
     res.then(initial_map_update_success, map_update_failure);
 }
 
 
-function reactive_update_map (updatedQueries) {
+export function reactive_update_map (updatedQueries) {
     console.log("Change to map!");
     get_cur_map();
 }
 
 
-function set_rand_banner() {
+export function set_rand_banner() {
     const randsty = new PIXI.TextStyle({
       fontFamily: "Courier",
       fontSize: MAP_FONT_SIZE,
@@ -139,7 +140,7 @@ function update_hero_px_loc(push){
     }
 }
 
-function update_local_hero_px_loc(local_hero){
+export function update_local_hero_px_loc(local_hero){
     let px_loc = map_map_index_to_pixel(local_hero.map_x, local_hero.map_y);
     local_hero.x = px_loc[0];
     local_hero.y = px_loc[1];
@@ -301,12 +302,12 @@ function map_query_failure () {
 }
 
 function get_initial_map(){
-    const val = g_convexhttp.query("getMap")();
+    const val = convexhttp.query("getMap")();
     val.then(initial_map_query_success, map_query_failure);
 }
 
 function get_cur_map(){
-    const val = g_convexhttp.query("getMap")();
+    const val = convexhttp.query("getMap")();
     val.then(map_query_success, map_query_failure);
 }
 
