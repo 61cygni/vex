@@ -1,16 +1,16 @@
 import { InternalConvexClient, ConvexHttpClient } from "convex-dev/browser";
 import convexConfig from "/convex.json";
 
-import {set_initial_hero_in_db, update_hero} from "/src/hero.js"
+import {set_initial_hero_in_db, update_hero} from "/src/hero.js";
+
 
 const convexhttp      = new ConvexHttpClient(convexConfig.origin);
-const internal_map    = new InternalConvexClient(convexConfig.origin, updatedQueries => reactive_update_map(updatedQueries));
-const { queryTokenMap, unsubscribeMap }   = internal_map.subscribe("getMap", []);
+let internal_map    = null; 
 
 // pointers to globals
-let g_app_map        = null;
+let g_app_map    = null;
 let g_pixi_hero  = null;
-let cur_map    = null;
+let cur_map      = null;
 
 let pixi_map  = null;
 
@@ -43,7 +43,6 @@ export function vex_init_pixi() {
 
     PIXI.utils.sayHello(type);
 
-    set_pixi_key_hooks();
     return new PIXI.Application({width: SCREEN_WIDTH, height: SCREEN_HEIGHT});
 }
 
@@ -76,6 +75,11 @@ function set_new_map(){
 
 export function set_initial_map() {
     console.log('Setting initial map');
+
+    internal_map    = new InternalConvexClient(convexConfig.origin, updatedQueries => reactive_update_map(updatedQueries));
+    const { queryTokenMap, unsubscribeMap }   = internal_map.subscribe("getMap", []);
+    set_pixi_key_hooks();
+
     let initial_map = generate_new_map();
     const res = convexhttp.mutation("setMap")(initial_map,false);
     res.then(initial_map_update_success, map_update_failure);
@@ -165,52 +169,6 @@ function pixi_draw_map() {
 	  g_app_map.ticker.add((delta) => gameLoop(delta));
 }
 
-function keyboard(value) {
-  const key = {};
-  key.value = value;
-  key.isDown = false;
-  key.isUp = true;
-  key.press = undefined;
-  key.release = undefined;
-  //The `downHandler`
-  key.downHandler = (event) => {
-    if (event.key === key.value) {
-      if (key.isUp && key.press) {
-        key.press();
-      }
-      key.isDown = true;
-      key.isUp = false;
-      event.preventDefault();
-    }
-  };
-
-  //The `upHandler`
-  key.upHandler = (event) => {
-    if (event.key === key.value) {
-      if (key.isDown && key.release) {
-        key.release();
-      }
-      key.isDown = false;
-      key.isUp = true;
-      event.preventDefault();
-    }
-  };
-
-  //Attach event listeners
-  const downListener = key.downHandler.bind(key);
-  const upListener = key.upHandler.bind(key);
-  
-  window.addEventListener("keydown", downListener, false);
-  window.addEventListener("keyup", upListener, false);
-  
-  // Detach event listeners
-  key.unsubscribe = () => {
-    window.removeEventListener("keydown", downListener);
-    window.removeEventListener("keyup", upListener);
-  };
-  
-  return key;
-}
 
 function set_pixi_key_hooks() {
     //Capture the keyboard arrow keys

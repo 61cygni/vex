@@ -1,9 +1,10 @@
 import { InternalConvexClient, ConvexHttpClient } from "convex-dev/browser";
 import convexConfig from "/convex.json";
 
-import {update_local_hero_px_loc} from "/src/map.js"
+import {update_local_hero_px_loc, set_g_pixi_hero_map} from "/src/map.js"
 
 let hero_char   = "@";
+let pixi_hero = null;
 
 let other_heros = [];
 
@@ -13,11 +14,11 @@ let g_app_hero            = null;
 
 // CONVEX global initialization
 const convexhttp_hero = new ConvexHttpClient(convexConfig.origin);
-const internal_hero   = new InternalConvexClient(convexConfig.origin, updatedQueries => reactive_update_hero(updatedQueries));
+let internal_hero   = null;
 
 // get notified on any changed to the following query. Changes will
 // call "reactive_update"
-const { queryTokenHero, unsubscribeHero } = internal_hero.subscribe("listHeros", []);
+
 
 
 export function set_g_pixi_hero_hero(ph) {
@@ -30,24 +31,27 @@ export function set_g_app_hero(app) {
 
 export function init_pixi_hero(color) {
     const herosty = new PIXI.TextStyle({
-      fontFamily: "Courier",
-      fontSize: MAP_FONT_SIZE,
-      fill: color,
-      fontWeight : "bolder"
-    });
+fontFamily: "Courier",
+fontSize: MAP_FONT_SIZE,
+fill: color,
+fontWeight : "bolder"
+});
 
+    console.log("[hero] initi_pixi_hero");
+    
     let pixi_hero = new PIXI.Text(hero_char, herosty);
-
     pixi_hero.interactive = true;
     pixi_hero._id = null; // will get ID from DB
-
+    
+    internal_hero   = new InternalConvexClient(convexConfig.origin, updatedQueries => reactive_update_hero(updatedQueries));
+    const { queryTokenHero, unsubscribeHero } = internal_hero.subscribe("listHeros", []);
+    
     return pixi_hero;
 }
 
 export function set_initial_hero_in_db() {
     console.log('XXXXX Setting initial hero:' + g_pixi_hero_hero.text);
     const res = convexhttp_hero.mutation("createHero")(g_pixi_hero_hero.text, g_pixi_hero_hero.map_x, g_pixi_hero_hero.map_y);
-    console.log("post mutation");
     res.then(initial_hero_update_success, hero_update_failure);
 }
 

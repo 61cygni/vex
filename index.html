@@ -12,32 +12,37 @@
     <script src="/src/screen.js"></script>
     <script type="module" src="/src/map.js"></script>
     <script type="module" src="/src/hero.js"></script>
+    <script type="module" src="/src/title.js"></script>
     <script type="module">
 
+    import { set_g_app_title, init_and_set_title} from "/src/title.js";
     import { set_g_pixi_hero_map, reactive_update_map, set_initial_map, set_rand_banner,  vex_init_pixi, set_g_app_map} from "/src/map.js";
     import { reactive_update_hero, init_pixi_hero, set_g_pixi_hero_hero, set_g_app_hero} from "/src/hero.js";
 
 
     // PIXI global initialization. 
     const g_app = vex_init_pixi(); // defined in src/map.js 
+
     set_g_app_map(g_app);
     set_g_app_hero(g_app);
+    set_g_app_title(g_app);
 
     // //Add the canvas that Pixi automatically created for you to the HTML document
     document.body.appendChild(g_app.view);
 
-    let pixi_hero = null;
+    init_and_set_title();
 
-    // setup left hand sidebar
-    set_rand_banner();
-    // first map
-    set_initial_map();
 
-    pixi_hero = init_pixi_hero("yellow");
-    set_g_pixi_hero_map(pixi_hero);
-    set_g_pixi_hero_hero(pixi_hero);
+    // // setup left hand sidebar
+    // set_rand_banner();
+    // // first map
+    // set_initial_map();
 
-    g_app.stage.addChild(pixi_hero);
+    // pixi_hero = init_pixi_hero("yellow");
+    // set_g_pixi_hero_map(pixi_hero);
+    // set_g_pixi_hero_hero(pixi_hero);
+
+    // g_app.stage.addChild(pixi_hero);
 
 
   </script>
