@@ -1,10 +1,10 @@
 import { mutation } from "./_generated/server";
 
 // Set the map 
-export default mutation(async ({ db }, id : Id, icon: string, x : number, y : number ) => {
+export default mutation(async ({ db }, id : Id, level: number, icon: string, x : number, y : number ) => {
 
   console.log("setHero: " + id);
-  const hero = { icon, x, y, };
+  const hero = { icon, level, x, y, };
 
   let hero_list = await db.table("the_hero").collect();
 
@@ -15,8 +15,6 @@ export default mutation(async ({ db }, id : Id, icon: string, x : number, y : nu
         return hero_list[index]._id;
     }
   }
-
-  return 0;
 
   console.log("Inserting new hero "+icon);
   db.insert("the_hero", hero);
