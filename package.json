@@ -9,7 +9,8 @@
   },
   "dependencies": {
     "bootstrap": "^5.0.2",
-    "convex": "^0.1.6"
+    "convex": "^0.1.6",
+    "pixi-timer-events": "^0.1.3"
   },
   "devDependencies": {
     "@types/node": "~16.11.12",

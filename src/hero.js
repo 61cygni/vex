@@ -1,10 +1,11 @@
 import { InternalConvexClient, ConvexHttpClient } from "convex/browser";
 import convexConfig from "/convex.json";
 
-import {update_local_hero_px_loc, update_hero_px_loc, set_g_pixi_hero_map} from "/src/map.js"
+import {broadcast_msg, update_local_hero_px_loc, update_hero_px_loc, set_g_pixi_hero_map, display_local_msg} from "/src/map.js"
 
-let hero_char   = "@";
 
+const hero_char   = "@";
+const INITIAL_HERO_HP = 100;
 let other_heros = [];
 
 // pointers to globals
@@ -22,6 +23,51 @@ export function set_g_pixi_hero_hero(ph) {
 export function set_g_app_hero(app) {
     g_app_hero = app;
 }
+
+// --
+// <SIDEBAR>
+// --
+
+let pixi_hero_rect    = null;
+let pixi_sidebar_text = null;
+
+function hero_sidebar_gen_string(dg, hp, exp){
+    let str = `Hero: `+hero_char+`
+Floor: `+dg+`
+Hp: `+hp+`
+Xp: `+exp;
+    return str;
+}
+
+function init_hero_sidebar() {
+    pixi_hero_rect = new PIXI.Graphics();
+    pixi_hero_rect.lineStyle({width: 2, color: 0xFFFF00, alpha: 1});
+    pixi_hero_rect.beginFill(0x0000);
+    pixi_hero_rect.drawRect(HERO_SIDEBAR_X_OFFSET, HERO_SIDEBAR_Y_OFFSET, HERO_SIDEBAR_W, HERO_SIDEBAR_H);
+    pixi_hero_rect.endFill();
+    g_app_hero.stage.addChild(pixi_hero_rect);
+
+    const sidebarsty = new PIXI.TextStyle({
+fontFamily: "Courier",
+fontSize: MAP_FONT_SIZE - 4,
+fill: 'green',
+});
+
+  pixi_sidebar_text = new PIXI.Text(hero_sidebar_gen_string(1,INITIAL_HERO_HP, 0), sidebarsty);
+  pixi_sidebar_text.x = HERO_SIDEBAR_X_OFFSET + 4;
+  pixi_sidebar_text.y = HERO_SIDEBAR_Y_OFFSET + 4;
+  g_app_hero.stage.addChild(pixi_sidebar_text);
+ 
+}
+
+// Print sidebar to screen with current stats 
+function update_hero_sidebar() {
+    pixi_sidebar_text.text = hero_sidebar_gen_string(g_pixi_hero_hero.level, g_pixi_hero_hero.hp, g_pixi_hero_hero.xp);
+}
+
+// --
+// </STATS>
+// --
 
 
 // --
@@ -42,10 +88,14 @@ fontWeight : "bolder"
     pixi_hero.interactive = true;
     pixi_hero.level       = level;
     pixi_hero._id = null; // will get ID from DB
+    pixi_hero.hp  = INITIAL_HERO_HP; 
+    pixi_hero.xp  = 0;
 
     
     internal_hero   = new InternalConvexClient(convexConfig.origin, updatedQueries => reactive_update_hero(updatedQueries));
     const { queryTokenHero, unsubscribeHero } = internal_hero.subscribe("listHeros", [1]);
+
+    init_hero_sidebar();
     
     return pixi_hero;
 }
@@ -75,23 +125,29 @@ export function set_initial_hero_in_db() {
 }
 
 // --
-// Push current hero state to back end
+// <UPDATE_HERO>
+//
+// Push current hero state to convex 
 // --
 
 export function update_hero() {
-    console.log('[her] update_hero '+g_pixi_hero_hero.map_x);
+    console.log('[hero] update_hero '+g_pixi_hero_hero._id);
     const res =
     convexhttp_hero.mutation("setHero")(g_pixi_hero_hero._id, g_pixi_hero_hero.level,  g_pixi_hero_hero.text, g_pixi_hero_hero.map_x, g_pixi_hero_hero.map_y);
+
+    update_hero_sidebar(); // optimistically update the sidebar stats
     res.then(hero_update_success, hero_update_failure);
 }
 function hero_update_success () {
     console.log("Successfully updated initial hero");
-    list_heros_from_db();
 }
 function hero_update_failure () {
     console.log("Failed to update initial hero");
 }
 
+// --
+// </UPDATE_HERO>
+// --
 
 
 function initial_hero_update_success (id) {
@@ -99,6 +155,11 @@ function initial_hero_update_success (id) {
     g_pixi_hero_hero._id = id;
     set_g_pixi_hero_map(g_pixi_hero_hero);
     update_hero_px_loc(true);
+    
+    // At this point can safely assume map has been drawn, and hero too
+    broadcast_msg(id, "a new hero entered dungeon!", ""+id);
+
+
     list_heros_from_db();
 }
 
@@ -183,7 +244,7 @@ function list_hero_query_failure () {
     console.log("Failed to retrieve hero");
 }
 
-export function reactive_update_hero (updatedQueries) {
+function reactive_update_hero (updatedQueries) {
     console.log("Change to hero!");
     list_heros_from_db();
 }

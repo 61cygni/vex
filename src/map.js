@@ -1,11 +1,13 @@
 import { InternalConvexClient, ConvexHttpClient } from "convex/browser";
 import convexConfig from "/convex.json";
 
+
 import {set_initial_hero_in_db, update_hero, hero_reset_other_heros} from "/src/hero.js";
 
 
-const convexhttp    = new ConvexHttpClient(convexConfig.origin);
-let internal_map    = null; 
+const convexhttp_map    = new ConvexHttpClient(convexConfig.origin);
+let   convex_internal_msg = null; 
+
 
 // pointers to globals
 let g_app_map    = null;
@@ -13,7 +15,7 @@ let g_pixi_hero  = null;
 let cur_map      = null;
 
 let pixi_map  = null;
-let pixi_level_text = null;
+let pixi_map_msg_cover = null;
 
 // Font for map
 let map_sty = new PIXI.TextStyle({
@@ -29,7 +31,6 @@ let DOWN_CHAR = 'v';
 
 // Menu for side panels
 let rand_banner = "(rand map)";
-let level_text  = "Level: ";
 
 
 export function set_g_app_map(app) {
@@ -51,11 +52,6 @@ export function vex_init_pixi() {
     PIXI.utils.sayHello(type);
 
     return new PIXI.Application({width: SCREEN_WIDTH, height: SCREEN_HEIGHT});
-}
-
-function rand_clicked() {
-    console.log("rand clicked!");
-    set_new_map();
 }
 
 function map_update_success () {
@@ -84,12 +80,74 @@ function set_new_map(){
     let new_map = generate_new_map(true, true);
 
     console.log('Setting new map');
-    const res = convexhttp.mutation("setMap")(1, new_map, true);
+    const res = convexhttp_map.mutation("setMap")(1, new_map, true);
     res.then(map_update_success, map_update_failure);
 }
 
 // --
-// DOWNSTAIRS
+// <MESSAGES>
+// --
+
+// Broadcast message to everyone
+function broadcast_msg_update_success(){
+    console.log("Successfully sent message");
+}
+function broadcast_msg_update_failure(){
+    console.log("Failed to send message");
+}
+export function broadcast_msg(channel, body, author){
+    console.log('[map] sending message: ' + body);
+    const res = convexhttp_map.mutation("sendMessage")(channel, body, author);
+    res.then(broadcast_msg_update_success, broadcast_msg_update_failure);
+}
+
+export function display_local_msg(body, color = "red", timeout = 3000){
+    const msg_sty = new PIXI.TextStyle({
+    fontFamily: "Courier",
+    fontSize: MAP_FONT_SIZE - 4,
+    fill: color,
+    });
+
+    let local_msg = new PIXI.Text(body, msg_sty);
+    local_msg.x = (SCREEN_WIDTH/2) - (local_msg.width/2);
+    local_msg.y = SCREEN_HEIGHT - (MAP_FONT_SIZE+8);
+
+    g_app_map.stage.removeChild(pixi_map_msg_cover);
+    g_app_map.stage.addChild(pixi_map_msg_cover);
+    g_app_map.stage.addChild(local_msg);
+    setTimeout(()=>g_app_map.stage.removeChild(local_msg), timeout);
+}
+
+function reactive_msg_update (updatedQueries) {
+    console.log("Change to messages!");
+
+    // get last message 
+    const val = convexhttp_map.query("listMessages")(g_pixi_hero._id);
+    val.then(list_msg_query_success, list_msg_query_failure);
+}
+
+function list_msg_query_success (m) {
+    console.log("Successfully retrieved messages ");
+    if(m == null){
+        return;
+    }
+    console.log(m);
+    if(""+m.channel != ""+g_pixi_hero._id){
+        display_local_msg(m.body);
+    }
+}
+
+function list_msg_query_failure (m) {
+    console.log("Failed to retrieved messages! ");
+}
+
+// --
+// </MESSAGES>
+// --
+
+
+// --
+// <DOWNSTAIRS>
 //
 // XXXX FIXME RACE CONDITION
 //      - currently just forces the new map to be written. But if
@@ -103,11 +161,12 @@ function create_ds_update_success(map){
         console.log("[map] DOWNSTAIRS UPDATE SUCCESS!!");
         cur_map = map;
         g_pixi_hero.level++;
-        pixi_level_text.text = level_text + g_pixi_hero.level;
+
         hero_reset_other_heros();
         console.log(cur_map);
         pixi_draw_map();
         update_hero_px_loc(true);
+        broadcast_msg(g_pixi_hero._id, "Someone has entered level "+g_pixi_hero.level, ""+g_pixi_hero._id);
     }
     return downstairs_map_update_success;
 }
@@ -119,17 +178,17 @@ function create_downstairs_success_func(l) {
             console.log("[map] succesfully queried map but level doesn't exist "); 
             console.log("[map] creating map level "+new_level); 
             let new_map = generate_new_map(true, true);
-            const res = convexhttp.mutation("setMap")(new_level, new_map, true);
+            const res = convexhttp_map.mutation("setMap")(new_level, new_map, true);
             res.then(create_ds_update_success(new_map), downstairs_map_update_failure);
         }else{
             // got a map!
             console.log("[map] successfully queried map for level "+new_level);
             cur_map = ret;
             g_pixi_hero.level++;
-            pixi_level_text.text = level_text + g_pixi_hero.level;
             hero_reset_other_heros();
             pixi_draw_map();
             update_hero_px_loc(true);
+            broadcast_msg(g_pixi_hero._id, "Someone has entered level "+g_pixi_hero.level, ""+g_pixi_hero._id);
         }
     }
     return go_downstairs_query_success;
@@ -140,56 +199,86 @@ function downstairs_map_update_failure(){
 }
 
 function go_downstairs(){
-    
     let new_level = g_pixi_hero.level + 1;
-    const val = convexhttp.query("getMap")(new_level);
+    const val = convexhttp_map.query("getMap")(new_level);
     val.then(create_downstairs_success_func(new_level), go_downstairs_query_fail);
 }
 
 function go_downstairs_query_fail(ret){
-    console.log("[map] failed to query map"); 
+    console.log("[map] failed to query downstairs map"); 
 }
 
 // --
-// /DOWNSTAIRS
+// </DOWNSTAIRS>
 // --
+
+// --
+// <UPSTAIRS>
+// --
+
+function create_upstairs_success_func(l) {
+    let new_level = l; 
+    function go_upstairs_query_success(ret){
+        if(ret == null) {
+            console.log("[map] FATAL upstairs map doesn't exist "); 
+        }else{
+            // got a map!
+            console.log("[map] upstairs successfully queried map for level "+new_level);
+            cur_map = ret;
+            g_pixi_hero.level--;
+            hero_reset_other_heros();
+            pixi_draw_map();
+            update_hero_px_loc(true);
+        }
+    }
+    return go_upstairs_query_success;
+}
+
+function go_upstairs_query_fail(ret){
+    console.log("[map] failed to query upstairs map"); 
+}
+
+
+function go_upstairs(){
+    let new_level = g_pixi_hero.level - 1;
+    const val = convexhttp_map.query("getMap")(new_level);
+    val.then(create_upstairs_success_func(new_level), go_upstairs_query_fail);
+}
+
+// --
+// </UPSTAIRS>
+// --
+
+
+function init_message_bar(){
+    pixi_map_msg_cover = new PIXI.Graphics();
+    //pixi_map_msg_cover.lineStyle({width: 2, color: 0xFFFF00, alpha: 1});
+    pixi_map_msg_cover.beginFill(0x0000);
+    pixi_map_msg_cover.drawRect(0, SCREEN_HEIGHT - (MAP_FONT_SIZE+8), SCREEN_WIDTH, 24);
+    pixi_map_msg_cover.endFill();
+    g_app_map.stage.addChild(pixi_map_msg_cover);
+}
+
 
 // Create first level of the map
 export function set_initial_map(new_map) {
     console.log('Setting initial map');
 
-    //internal_map    = new InternalConvexClient(convexConfig.origin, updatedQueries => reactive_update_map(updatedQueries));
-    // const { queryTokenMap, unsubscribeMap }   = internal_map.subscribe("getMap", []);
+    convex_internal_msg    = new InternalConvexClient(convexConfig.origin, updatedQueries => reactive_msg_update(updatedQueries));
+    const { queryTokenMap, unsubscribeMap }   = convex_internal_msg.subscribe("listMessages", [0]);
+
     set_pixi_key_hooks();
+    init_message_bar();
 
     let initial_map = generate_new_map(false, true);
 
     // set map in data and force replcement
-    const res = convexhttp.mutation("setMap")(1, initial_map, new_map);
+    const res = convexhttp_map.mutation("setMap")(1, initial_map, new_map);
     res.then(initial_map_update_success, map_update_failure);
 }
 
 
-export function reactive_update_map (updatedQueries) {
-    console.log("Change to map!");
-    get_cur_map();
-}
 
-
-export function set_level_text() {
-    const sty = new PIXI.TextStyle({
-      fontFamily: "Courier",
-      fontSize: MAP_FONT_SIZE,
-      fill: "blue",
-      fontWeight : "bolder"
-    });
-
-    pixi_level_text = new PIXI.Text(level_text+1, sty);
-    pixi_level_text.x = 32;
-    pixi_level_text.y = 32;
-
-    g_app_map.stage.addChild(pixi_level_text);
-}
 
 function map_map_index_to_pixel(x, y){
     // It seems characters are offset by a pixel every 4 pixels .. so
@@ -295,9 +384,10 @@ function set_pixi_key_hooks() {
       }
       keyu.press = () => { /// go up stairs!
         let map_index = map_xy_to_index(g_pixi_hero.map_x, g_pixi_hero.map_y); 
-        console.log("UP!!: "+cur_map[map_index]);
         if(cur_map[map_index] == UP_CHAR){
-            console.log("up!!");
+            console.log("[map] heading upstairs!");
+            console.log("[map] Hero is currently on level "+g_pixi_hero.level);
+            go_upstairs();
         }
       }
 }
@@ -358,6 +448,10 @@ function initial_map_query_success(m) {
     cur_map = m;
     console.log(cur_map);
     pixi_draw_map();
+
+    display_local_msg("Welcome hero!"); 
+
+
     set_initial_hero_in_db();
 }
 
@@ -373,12 +467,12 @@ function map_query_failure () {
 }
 
 function get_initial_map(){
-    const val = convexhttp.query("getMap")(1);
+    const val = convexhttp_map.query("getMap")(1);
     val.then(initial_map_query_success, map_query_failure);
 }
 
 function get_cur_map(){
-    const val = convexhttp.query("getMap")(1);
+    const val = convexhttp_map.query("getMap")(1);
     val.then(map_query_success, map_query_failure);
 }
 
@@ -441,14 +535,14 @@ function generate_new_map(upstairs, downstairs){
   // always put upstairs in the first room
   if (upstairs != false) {
     new_map = setCharXY(new_map, room_list[0][0], room_list[0][1], UP_CHAR);
-    //const res = convexhttp.mutation("setItem")(null, 1, '^', room_list[0][0], room_list[0][1]);
+    //const res = convexhttp_map.mutation("setItem")(null, 1, '^', room_list[0][0], room_list[0][1]);
     //res.then(item_update_success, item_update_failure);
   }
   // always put upstairs in the last room
   if (downstairs != false) {
     let center_tuple = room_list[number_of_rooms - 1];
     new_map = setCharXY(new_map, center_tuple[0], center_tuple[1], DOWN_CHAR);
-    //const res = convexhttp.mutation("setItem")(null, 1, 'V', center_tuple[0], center_tuple[1]);
+    //const res = convexhttp_map.mutation("setItem")(null, 1, 'V', center_tuple[0], center_tuple[1]);
     //res.then(item_update_success, item_update_failure);
   }
 
