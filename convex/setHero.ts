@@ -6,7 +6,7 @@ export default mutation(async ({ db }, id : Id, level: number, icon: string, x :
   console.log("setHero: " + id);
   const hero = { icon, level, x, y, };
 
-  let hero_list = await db.table("the_hero").collect();
+  let hero_list = await db.query("the_hero").collect();
 
   for (let index = 0; index < hero_list.length; index++) {
     if(""+hero_list[index]._id == ""+id){

@@ -5,7 +5,7 @@ export default mutation(async ({ db }, level: number, body: string, force: boole
   console.log("setMap");
 
   const map = { level, body, time: Date.now() };
-  let map_list = await db.table("the_map").collect();
+  let map_list = await db.query("the_map").collect();
 
   console.log("map_list.length "+map_list.length);
 
@@ -16,6 +16,7 @@ export default mutation(async ({ db }, level: number, body: string, force: boole
         if(force == true){
             console.log("updating map");
             db.replace(map_list[index]._id, map);
+            console.log("done!");
             return level;
         }else{
             console.log("not updating because force not set");

@@ -1,7 +1,8 @@
 import { InternalConvexClient, ConvexHttpClient } from "convex/browser";
-import convexConfig from "/convex.json";
+import convexConfig from "../convex/_generated/clientConfig";
 
 import {broadcast_msg, update_local_hero_px_loc, update_hero_px_loc, set_g_pixi_hero_map, display_local_msg} from "/src/map.js"
+import * as PIXI from 'pixi.js';
 
 
 const hero_char   = "@";
@@ -13,7 +14,7 @@ let g_pixi_hero_hero      = null;
 let g_app_hero            = null;
 
 // CONVEX global initialization
-const convexhttp_hero = new ConvexHttpClient(convexConfig.origin);
+const convexhttp_hero = new ConvexHttpClient(convexConfig);
 let internal_hero   = null;
 
 export function set_g_pixi_hero_hero(ph) {
@@ -92,7 +93,7 @@ fontWeight : "bolder"
     pixi_hero.xp  = 0;
 
     
-    internal_hero   = new InternalConvexClient(convexConfig.origin, updatedQueries => reactive_update_hero(updatedQueries));
+    internal_hero   = new InternalConvexClient(convexConfig, updatedQueries => reactive_update_hero(updatedQueries));
     const { queryTokenHero, unsubscribeHero } = internal_hero.subscribe("listHeros", [1]);
 
     init_hero_sidebar();

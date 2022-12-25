@@ -1,11 +1,12 @@
 import { InternalConvexClient, ConvexHttpClient } from "convex/browser";
-import convexConfig from "/convex.json";
+import convexConfig from "../convex/_generated/clientConfig";
+import * as PIXI from 'pixi.js';
 
 
 import {set_initial_hero_in_db, update_hero, hero_reset_other_heros} from "/src/hero.js";
 
 
-const convexhttp_map    = new ConvexHttpClient(convexConfig.origin);
+const convexhttp_map    = new ConvexHttpClient(convexConfig);
 let   convex_internal_msg = null; 
 
 
@@ -264,7 +265,7 @@ function init_message_bar(){
 export function set_initial_map(new_map) {
     console.log('Setting initial map');
 
-    convex_internal_msg    = new InternalConvexClient(convexConfig.origin, updatedQueries => reactive_msg_update(updatedQueries));
+    convex_internal_msg    = new InternalConvexClient(convexConfig, updatedQueries => reactive_msg_update(updatedQueries));
     const { queryTokenMap, unsubscribeMap }   = convex_internal_msg.subscribe("listMessages", [0]);
 
     set_pixi_key_hooks();

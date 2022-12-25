@@ -1,3 +1,36 @@
+---  Notes:
+
+Need to have flyctl
+> https://fly.io/docs/hands-on/install-flyctl/
+
+Things to install:
+
+%npm install pixi.jas
+%npm install convex 
+
+# run local vite webserver
+% npm run dev
+
+# use vite to build 
+% npm run build 
+
+# use vite to test locally 
+% npm run serve 
+
+# copy everything in dist/ to fly directory (public/)
+flyctl deploy
+flyctl open
+
+---
+
+
+Build / run intructions :
+
+- To run local dev version
+  % npm run dev
+
+Installed pixi.js from npm
+%npm install pixi.js
 
 Audio:
 

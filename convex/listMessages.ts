@@ -7,6 +7,6 @@ export default query(async ({ db }, channel: Id): Promise<{}> => {
   console.log("listMessages: "+channel);
 
   return await db
-    .table("messages")
+    .query("messages")
     .order("desc").first(); // return the last message entered
 });

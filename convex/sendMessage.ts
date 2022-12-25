@@ -8,7 +8,7 @@ export default mutation(async ({ db }, channel: Id, body: string, author: string
  let cur_time = Date.now();
 
   // delete all messages older than 30s
-  let msgs = await db.table("messages").collect();
+  let msgs = await db.query("messages").collect();
 
   for (let i = 0; i < msgs.length; i++){
     console.log("XXXX message!"+(cur_time - msgs[i].time) );

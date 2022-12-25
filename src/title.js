@@ -1,11 +1,13 @@
 import { InternalConvexClient, ConvexHttpClient } from "convex/browser";
-import convexConfig from "/convex.json";
+import convexConfig from "../convex/_generated/clientConfig";
 
 import {set_initial_map, set_g_pixi_hero_map} from "/src/map.js"
 import {init_pixi_hero, set_g_pixi_hero_hero} from "/src/hero.js";
 
+import * as PIXI from 'pixi.js';
+
 // CONVEX global initialization
-const convexhttp_title = new ConvexHttpClient(convexConfig.origin);
+const convexhttp_title = new ConvexHttpClient(convexConfig);
 
 let title_string  = "vex";
 let new_game_str  = "[new]";

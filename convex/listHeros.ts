@@ -4,9 +4,10 @@ export default query(async ({ db }, level : number): Promise<{}> => {
   console.log("listHeros "+level);
 
   if(level == 0){
-    return db.table("the_hero").collect();
+    console.log("level is zero");
+    return await db.query("the_hero").collect();
   }
-  return db.table("the_hero")
+  return db.query("the_hero")
            .filter(q => q.eq(q.field("level"), level))
            .collect();
 });

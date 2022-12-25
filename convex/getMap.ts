@@ -1,7 +1,7 @@
 import { query } from "./_generated/server";
 
 export default query(async ({ db }, level : number): Promise<string> => {
-  const mapDoc = await db.table("the_map")
+  const mapDoc = await db.query("the_map")
                           .filter(q => q.eq(q.field("level"), level))
                           .first();
   if (mapDoc === null) {
