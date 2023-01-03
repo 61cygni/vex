@@ -2,10 +2,10 @@
   "name": "vex",
   "version": "0.0.0",
   "scripts": {
-    "dev": "vite",
-    "build": "rm -rf dist && vite build",
+    "dev": "vite src/",
+    "build": "rm -rf dist && vite build src/ && cp -R src/dist/* public/",
     "clean": "",
-    "serve": "vite preview"
+    "serve": "vite preview src/"
   },
   "dependencies": {
     "bootstrap": "^5.0.2",

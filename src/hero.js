@@ -1,8 +1,9 @@
 import { InternalConvexClient, ConvexHttpClient } from "convex/browser";
 import convexConfig from "../convex/_generated/clientConfig";
 
-import {broadcast_msg, update_local_hero_px_loc, update_hero_px_loc, set_g_pixi_hero_map, display_local_msg} from "/src/map.js"
+import {broadcast_msg, update_local_hero_px_loc, update_hero_px_loc, set_g_pixi_hero_map, display_local_msg} from "/map.js"
 import * as PIXI from 'pixi.js';
+import * as SCREEN from '/screen.js';
 
 
 const hero_char   = "@";
@@ -44,19 +45,19 @@ function init_hero_sidebar() {
     pixi_hero_rect = new PIXI.Graphics();
     pixi_hero_rect.lineStyle({width: 2, color: 0xFFFF00, alpha: 1});
     pixi_hero_rect.beginFill(0x0000);
-    pixi_hero_rect.drawRect(HERO_SIDEBAR_X_OFFSET, HERO_SIDEBAR_Y_OFFSET, HERO_SIDEBAR_W, HERO_SIDEBAR_H);
+    pixi_hero_rect.drawRect(SCREEN.HERO_SIDEBAR_X_OFFSET, SCREEN.HERO_SIDEBAR_Y_OFFSET, SCREEN.HERO_SIDEBAR_W, SCREEN.HERO_SIDEBAR_H);
     pixi_hero_rect.endFill();
     g_app_hero.stage.addChild(pixi_hero_rect);
 
     const sidebarsty = new PIXI.TextStyle({
 fontFamily: "Courier",
-fontSize: MAP_FONT_SIZE - 4,
+fontSize: SCREEN.MAP_FONT_SIZE - 4,
 fill: 'green',
 });
 
   pixi_sidebar_text = new PIXI.Text(hero_sidebar_gen_string(1,INITIAL_HERO_HP, 0), sidebarsty);
-  pixi_sidebar_text.x = HERO_SIDEBAR_X_OFFSET + 4;
-  pixi_sidebar_text.y = HERO_SIDEBAR_Y_OFFSET + 4;
+  pixi_sidebar_text.x = SCREEN.HERO_SIDEBAR_X_OFFSET + 4;
+  pixi_sidebar_text.y = SCREEN.HERO_SIDEBAR_Y_OFFSET + 4;
   g_app_hero.stage.addChild(pixi_sidebar_text);
  
 }
@@ -78,7 +79,7 @@ function update_hero_sidebar() {
 export function init_pixi_hero(level, color) {
     const herosty = new PIXI.TextStyle({
 fontFamily: "Courier",
-fontSize: MAP_FONT_SIZE,
+fontSize: SCREEN.MAP_FONT_SIZE,
 fill: color,
 fontWeight : "bolder"
 });

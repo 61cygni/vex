@@ -1,27 +1,47 @@
-let MAP_FONT_SIZE    = 16; // px  
+import * as PIXI from 'pixi.js';
 
-let MAP_WIDTH_CHAR   = 64;  
-let MAP_HEIGHT_CHAR  = 40;
-let SCREEN_WIDTH     = 1024; // px
-let SCREEN_HEIGHT    = 768;
+export const MAP_FONT_SIZE    = 16; // px  
+
+export const MAP_WIDTH_CHAR   = 64;  
+export const MAP_HEIGHT_CHAR  = 40;
+export const SCREEN_WIDTH     = 1024; // px
+export const SCREEN_HEIGHT    = 768;
 
 // font widths in pixels. Figured out through trial and error .. so
 // clearly brittle 
-let FONT_PIXEL_W = 11;
-let FONT_PIXEL_H = 18;
+export const FONT_PIXEL_W = 11;
+export const FONT_PIXEL_H = 18;
 
 // Upper left corner of map on the screen
+export { MAP_X_OFFSET };
 let MAP_X_OFFSET = 0; // can only be calculated once we have the map 
+export function set_map_x_offset(val){
+    MAP_X_OFFSET = val;
+}
+
+export  { MAP_Y_OFFSET };
 let MAP_Y_OFFSET = FONT_PIXEL_H;
+export function set_map_y_offset(val){
+    MAP_Y_OFFSET = val;
+}
 
 // Position of main hero sidebar
-let HERO_SIDEBAR_W = 128;
-let HERO_SIDEBAR_H = 64;
-let HERO_SIDEBAR_X_OFFSET =  6; 
-let HERO_SIDEBAR_Y_OFFSET = MAP_Y_OFFSET;
+export const HERO_SIDEBAR_W = 128;
+export const HERO_SIDEBAR_H = 64;
+export const HERO_SIDEBAR_X_OFFSET =  6; 
+export const HERO_SIDEBAR_Y_OFFSET = MAP_Y_OFFSET;
+
+export function vex_init_pixi() {
+    console.log("[vex:screen.js] initializing pixi w:%d h:%d", SCREEN_WIDTH, SCREEN_HEIGHT);
+    let type = "WebGL";
+    if (!PIXI.utils.isWebGLSupported()) {
+        type = "canvas";
+    }
+    return new PIXI.Application({width: SCREEN_WIDTH, height: SCREEN_HEIGHT});
+}
 
 
-function keyboard(value) {
+export function keyboard(value) {
   const key = {};
   key.value = value;
   key.isDown = false;

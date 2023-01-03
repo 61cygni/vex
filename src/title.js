@@ -1,10 +1,11 @@
 import { InternalConvexClient, ConvexHttpClient } from "convex/browser";
 import convexConfig from "../convex/_generated/clientConfig";
 
-import {set_initial_map, set_g_pixi_hero_map} from "/src/map.js"
-import {init_pixi_hero, set_g_pixi_hero_hero} from "/src/hero.js";
+import {set_initial_map, set_g_pixi_hero_map} from "/map.js"
+import {init_pixi_hero, set_g_pixi_hero_hero} from "/hero.js";
 
-import * as PIXI from 'pixi.js';
+import * as PIXI   from 'pixi.js';
+import * as SCREEN from '/screen.js';
 
 // CONVEX global initialization
 const convexhttp_title = new ConvexHttpClient(convexConfig);
@@ -29,13 +30,13 @@ export function set_g_app_title(app) {
 export function init_and_set_title() {
     const title_text_sty = new PIXI.TextStyle({
       fontFamily: "Courier",
-      fontSize: MAP_FONT_SIZE + 4,
+      fontSize: SCREEN.MAP_FONT_SIZE + 4,
       fill: "red",
       fontWeight : "bolder"
     });
     const subtitle_text_sty = new PIXI.TextStyle({
       fontFamily: "Courier",
-      fontSize: MAP_FONT_SIZE- 2,
+      fontSize: SCREEN.MAP_FONT_SIZE- 2,
       fill: "green",
       fontWeight : "bolder"
     });
@@ -47,14 +48,14 @@ export function init_and_set_title() {
     // below is just used to calc positioning
     let pixi_aggsub  = new PIXI.Text(new_game_str+join_game_str, subtitle_text_sty);
 
-    let title_x_offset = Math.floor((SCREEN_WIDTH - pixi_title.width) / 2);
-    let title_y_offset = Math.floor((SCREEN_HEIGHT - (2*pixi_title.height)) / 2);
+    let title_x_offset = Math.floor((SCREEN.SCREEN_WIDTH - pixi_title.width) / 2);
+    let title_y_offset = Math.floor((SCREEN.SCREEN_HEIGHT - (2*pixi_title.height)) / 2);
     pixi_title.x = title_x_offset;
     pixi_title.y = title_y_offset;
 
-    let subnew_x_offset = Math.floor((SCREEN_WIDTH - pixi_aggsub.width) / 2);
+    let subnew_x_offset = Math.floor((SCREEN.SCREEN_WIDTH - pixi_aggsub.width) / 2);
     let subjoin_x_offset = subnew_x_offset + pixi_subnew.width; 
-    let subnew_y_offset = Math.floor((SCREEN_HEIGHT - (2*pixi_subnew.height)) / 2) + pixi_subnew.height;
+    let subnew_y_offset = Math.floor((SCREEN.SCREEN_HEIGHT - (2*pixi_subnew.height)) / 2) + pixi_subnew.height;
 
     pixi_subnew.x = subnew_x_offset;
     pixi_subnew.y = subnew_y_offset;
@@ -70,6 +71,8 @@ export function init_and_set_title() {
     g_app_title.stage.addChild(pixi_title);
     g_app_title.stage.addChild(pixi_subnew);
     g_app_title.stage.addChild(pixi_subjoin);
+
+    console.log("[title] Title initialized");
 
     //audio_play();
 }

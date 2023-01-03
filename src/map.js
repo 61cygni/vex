@@ -1,9 +1,10 @@
 import { InternalConvexClient, ConvexHttpClient } from "convex/browser";
 import convexConfig from "../convex/_generated/clientConfig";
 import * as PIXI from 'pixi.js';
+import * as SCREEN from '/screen.js';
 
 
-import {set_initial_hero_in_db, update_hero, hero_reset_other_heros} from "/src/hero.js";
+import {set_initial_hero_in_db, update_hero, hero_reset_other_heros} from "/hero.js";
 
 
 const convexhttp_map    = new ConvexHttpClient(convexConfig);
@@ -21,7 +22,7 @@ let pixi_map_msg_cover = null;
 // Font for map
 let map_sty = new PIXI.TextStyle({
   fontFamily: "Courier",
-  fontSize: MAP_FONT_SIZE,
+  fontSize: SCREEN.MAP_FONT_SIZE,
   fill: "green",
   letterSpacing : 2,
 });
@@ -43,17 +44,6 @@ export function set_g_pixi_hero_map(hero) {
     g_pixi_hero = hero;
 }
 
-export function vex_init_pixi() {
-    console.log("[vex:map.js] initializing pixi");
-    let type = "WebGL";
-    if (!PIXI.utils.isWebGLSupported()) {
-        type = "canvas";
-    }
-
-    PIXI.utils.sayHello(type);
-
-    return new PIXI.Application({width: SCREEN_WIDTH, height: SCREEN_HEIGHT});
-}
 
 function map_update_success () {
     console.log("Successfully updated initial map");
@@ -105,13 +95,13 @@ export function broadcast_msg(channel, body, author){
 export function display_local_msg(body, color = "red", timeout = 3000){
     const msg_sty = new PIXI.TextStyle({
     fontFamily: "Courier",
-    fontSize: MAP_FONT_SIZE - 4,
+    fontSize: SCREEN.MAP_FONT_SIZE - 4,
     fill: color,
     });
 
     let local_msg = new PIXI.Text(body, msg_sty);
-    local_msg.x = (SCREEN_WIDTH/2) - (local_msg.width/2);
-    local_msg.y = SCREEN_HEIGHT - (MAP_FONT_SIZE+8);
+    local_msg.x = (SCREEN.SCREEN_WIDTH/2) - (local_msg.width/2);
+    local_msg.y = SCREEN.SCREEN_HEIGHT - (SCREEN.MAP_FONT_SIZE+8);
 
     g_app_map.stage.removeChild(pixi_map_msg_cover);
     g_app_map.stage.addChild(pixi_map_msg_cover);
@@ -255,7 +245,7 @@ function init_message_bar(){
     pixi_map_msg_cover = new PIXI.Graphics();
     //pixi_map_msg_cover.lineStyle({width: 2, color: 0xFFFF00, alpha: 1});
     pixi_map_msg_cover.beginFill(0x0000);
-    pixi_map_msg_cover.drawRect(0, SCREEN_HEIGHT - (MAP_FONT_SIZE+8), SCREEN_WIDTH, 24);
+    pixi_map_msg_cover.drawRect(0, SCREEN.SCREEN_HEIGHT - (SCREEN.MAP_FONT_SIZE+8), SCREEN.SCREEN_WIDTH, 24);
     pixi_map_msg_cover.endFill();
     g_app_map.stage.addChild(pixi_map_msg_cover);
 }
@@ -284,8 +274,8 @@ export function set_initial_map(new_map) {
 function map_map_index_to_pixel(x, y){
     // It seems characters are offset by a pixel every 4 pixels .. so
     let fudge = .6;
-    let px_x  = MAP_X_OFFSET + (x * FONT_PIXEL_W) + Math.floor(fudge*x);
-    let px_y  = MAP_Y_OFFSET + (y * FONT_PIXEL_H);
+    let px_x  = SCREEN.MAP_X_OFFSET + (x * SCREEN.FONT_PIXEL_W) + Math.floor(fudge*x);
+    let px_y  = SCREEN.MAP_Y_OFFSET + (y * SCREEN.FONT_PIXEL_H);
     return [px_x,px_y];
 }
 
@@ -316,22 +306,23 @@ function pixi_draw_map() {
     }
       pixi_map.interactive = true;
 
-      MAP_X_OFFSET = Math.floor((SCREEN_WIDTH - pixi_map.width) / 2);
-      MAP_Y_OFFSET = FONT_PIXEL_H; // magic! 
+      //SCREEN.MAP_X_OFFSET = Math.floor((SCREEN.SCREEN_WIDTH - pixi_map.width) / 2);
+      SCREEN.set_map_x_offset( Math.floor((SCREEN.SCREEN_WIDTH - pixi_map.width) / 2));
+      SCREEN.set_map_y_offset(SCREEN.FONT_PIXEL_H); // magic! 
 
 
-      pixi_map.x = MAP_X_OFFSET;
-      pixi_map.y = MAP_Y_OFFSET;
+      pixi_map.x = SCREEN.MAP_X_OFFSET;
+      pixi_map.y = SCREEN.MAP_Y_OFFSET;
 
 	  g_app_map.stage.addChild(pixi_map);
 
       // choose a random location for the hero
-      let map_size = (MAP_WIDTH_CHAR+1) * MAP_HEIGHT_CHAR; 
+      let map_size = (SCREEN.MAP_WIDTH_CHAR+1) * SCREEN.MAP_HEIGHT_CHAR; 
       let loc = 0; 
       while(pixi_map.text[loc] != ' '){
           loc = Math.floor(Math.random() * map_size);
-          g_pixi_hero.map_y = Math.floor(loc / (MAP_WIDTH_CHAR+1));
-          g_pixi_hero.map_x = loc - (g_pixi_hero.map_y * (MAP_WIDTH_CHAR+1)); 
+          g_pixi_hero.map_y = Math.floor(loc / (SCREEN.MAP_WIDTH_CHAR+1));
+          g_pixi_hero.map_x = loc - (g_pixi_hero.map_y * (SCREEN.MAP_WIDTH_CHAR+1)); 
           //console.log("loc "+loc+" : " + cur_map[loc]);
           //console.log("map_x "+g_pixi_hero.map_x+" : map_y" + g_pixi_hero.map_y);
       }
@@ -342,7 +333,7 @@ function pixi_draw_map() {
 
 // great linear index into map array from xy coords
 function map_xy_to_index(x,y){
-        return (y * (MAP_WIDTH_CHAR+1)) + x;
+        return (y * (SCREEN.MAP_WIDTH_CHAR+1)) + x;
 }
 
 // --
@@ -351,16 +342,16 @@ function map_xy_to_index(x,y){
 
 function set_pixi_key_hooks() {
     //Capture the keyboard arrow keys
-      const left = keyboard("ArrowLeft"),
-      up = keyboard("ArrowUp"),
-      right = keyboard("ArrowRight"),
-      down = keyboard("ArrowDown"),
-      keyh = keyboard("h"), // left
-      keyj = keyboard("j"), // down 
-      keyk = keyboard("k"), // up
-      keyl = keyboard("l"), // right
-      keyu = keyboard("u"), // go upstairs 
-      keyd = keyboard("d"); // go downstairs
+      const left = SCREEN.keyboard("ArrowLeft"),
+      up = SCREEN.keyboard("ArrowUp"),
+      right = SCREEN.keyboard("ArrowRight"),
+      down = SCREEN.keyboard("ArrowDown"),
+      keyh = SCREEN.keyboard("h"), // left
+      keyj = SCREEN.keyboard("j"), // down 
+      keyk = SCREEN.keyboard("k"), // up
+      keyl = SCREEN.keyboard("l"), // right
+      keyu = SCREEN.keyboard("u"), // go upstairs 
+      keyd = SCREEN.keyboard("d"); // go downstairs
 
       right.press = keyboard_right;
       keyl.press  = keyboard_right;
@@ -483,7 +474,7 @@ function setCharAt(str,index,chr) {
 }
 
 function setCharXY(map, x, y, chr) {
-  return setCharAt(map, x + (y*(MAP_WIDTH_CHAR+1)), chr); 
+  return setCharAt(map, x + (y*(SCREEN.MAP_WIDTH_CHAR+1)), chr); 
 }
 
 //--
@@ -498,8 +489,8 @@ function generate_new_map(upstairs, downstairs){
   let new_map   = "";
   let room_list = [];
   
-  for (let y = 0; y < MAP_HEIGHT_CHAR; y++){
-      for (let x = 0; x < MAP_WIDTH_CHAR; x++){
+  for (let y = 0; y < SCREEN.MAP_HEIGHT_CHAR; y++){
+      for (let x = 0; x < SCREEN.MAP_WIDTH_CHAR; x++){
         new_map += "#";
       }
         new_map += "\n";
@@ -512,8 +503,8 @@ function generate_new_map(upstairs, downstairs){
       // generate a random room  (12 is a magic number for max size)
       let rand_room_w = Math.floor((Math.random() * 12) + 4);
       let rand_room_h = Math.floor((Math.random() * 12) + 4);
-      let rand_room_x = 1 + Math.floor((Math.random() * (MAP_WIDTH_CHAR -  (rand_room_w + 1))));
-      let rand_room_y = 1 + Math.floor((Math.random() * (MAP_HEIGHT_CHAR - (rand_room_h + 1))));
+      let rand_room_x = 1 + Math.floor((Math.random() * (SCREEN.MAP_WIDTH_CHAR -  (rand_room_w + 1))));
+      let rand_room_y = 1 + Math.floor((Math.random() * (SCREEN.MAP_HEIGHT_CHAR - (rand_room_h + 1))));
 
 
       let center_x = Math.floor(rand_room_x + (rand_room_w / 2));
