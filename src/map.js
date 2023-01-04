@@ -337,33 +337,33 @@ function map_xy_to_index(x,y){
 }
 
 // --
-// Keyboard Hooks!
+// keyboard Hooks!
 // --
 
 function set_pixi_key_hooks() {
     //Capture the keyboard arrow keys
-      const left = SCREEN.keyboard("ArrowLeft"),
-      up = SCREEN.keyboard("ArrowUp"),
-      right = SCREEN.keyboard("ArrowRight"),
-      down = SCREEN.keyboard("ArrowDown"),
-      keyh = SCREEN.keyboard("h"), // left
-      keyj = SCREEN.keyboard("j"), // down 
-      keyk = SCREEN.keyboard("k"), // up
-      keyl = SCREEN.keyboard("l"), // right
-      keyu = SCREEN.keyboard("u"), // go upstairs 
-      keyd = SCREEN.keyboard("d"); // go downstairs
+      const left = SCREEN.keyboard_press("ArrowLeft"),
+      up = SCREEN.keyboard_press("ArrowUp"),
+      right = SCREEN.keyboard_press("ArrowRight"),
+      down = SCREEN.keyboard_press("ArrowDown"),
+      keyh = SCREEN.keyboard_press("h"), // left
+      keyj = SCREEN.keyboard_press("j"), // down 
+      keyk = SCREEN.keyboard_press("k"), // up
+      keyl = SCREEN.keyboard_press("l"), // right
+      keyu = SCREEN.keyboard_once("u"), // go upstairs 
+      keyd = SCREEN.keyboard_once("d"); // go downstairs
 
-      right.press = keyboard_right;
-      keyl.press  = keyboard_right;
+      right.press = keyboard_once_right;
+      keyl.press  = keyboard_once_right;
 
-      left.press = keyboard_left; 
-      keyh.press = keyboard_left; 
+      left.press = keyboard_once_left; 
+      keyh.press = keyboard_once_left; 
 
-      up.press   = keyboard_up; 
-      keyk.press = keyboard_up; 
+      up.press   = keyboard_once_up; 
+      keyk.press = keyboard_once_up; 
 
-      down.press = keyboard_down; 
-      keyj.press = keyboard_down; 
+      down.press = keyboard_once_down; 
+      keyj.press = keyboard_once_down; 
 
       keyd.press = () => { /// go down stairs!
         let map_index = map_xy_to_index(g_pixi_hero.map_x, g_pixi_hero.map_y); 
@@ -384,7 +384,7 @@ function set_pixi_key_hooks() {
       }
 }
 
-function keyboard_right(){
+function keyboard_once_right(){
     let new_x = g_pixi_hero.map_x + 1;
     let new_y = g_pixi_hero.map_y;
     let map_index = map_xy_to_index(new_x, new_y); 
@@ -394,7 +394,7 @@ function keyboard_right(){
         update_hero_px_loc(true);
     }
 }
-function keyboard_left(){
+function keyboard_once_left(){
     let new_x = g_pixi_hero.map_x - 1;
     let new_y = g_pixi_hero.map_y;
     let map_index = map_xy_to_index(new_x, new_y); 
@@ -405,7 +405,7 @@ function keyboard_left(){
         update_hero_px_loc(true);
     }
 }
-function keyboard_up(){
+function keyboard_once_up(){
     let new_x = g_pixi_hero.map_x;
     let new_y = g_pixi_hero.map_y - 1;
     let map_index = map_xy_to_index(new_x, new_y); 
@@ -415,7 +415,7 @@ function keyboard_up(){
         update_hero_px_loc(true);
     }
 }
-function keyboard_down(){
+function keyboard_once_down(){
     let new_x = g_pixi_hero.map_x;
     let new_y = g_pixi_hero.map_y + 1;
     let map_index = map_xy_to_index(new_x, new_y); 
@@ -425,8 +425,9 @@ function keyboard_down(){
         update_hero_px_loc(true);
     }
 }
+
 //--
-// Keyboard Hooks!
+// keyboard Hooks!
 //--
 
 

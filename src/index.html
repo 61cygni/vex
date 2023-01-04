@@ -15,11 +15,11 @@
 
     import { vex_init_pixi} from "/screen.js";
     import { set_g_app_title, init_and_set_title} from "/title.js";
-    import { set_g_pixi_hero_map, set_initial_map,  set_g_app_map} from "/map.js";
+    import { set_g_pixi_hero_map, set_initial_map, set_g_app_map} from "/map.js";
     import { init_pixi_hero, set_g_pixi_hero_hero, set_g_app_hero} from "/hero.js";
 
     // PIXI global initialization. 
-    const g_app = vex_init_pixi(); // defined in /map.js 
+    const g_app = vex_init_pixi(); // defined in /screen.js 
     console.log("[index] PIXI initialized"); 
 
     set_g_app_map(g_app);

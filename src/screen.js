@@ -41,7 +41,7 @@ export function vex_init_pixi() {
 }
 
 
-export function keyboard(value) {
+export function keyboard_once(value) {
   const key = {};
   key.value = value;
   key.isDown = false;
@@ -83,6 +83,35 @@ export function keyboard(value) {
   key.unsubscribe = () => {
     window.removeEventListener("keydown", downListener);
     window.removeEventListener("keyup", upListener);
+  };
+  
+  return key;
+}
+
+export function keyboard_press(value) {
+  const key = {};
+  key.value = value;
+  key.isDown = false;
+  key.isUp = true;
+  key.press = undefined;
+  key.release = undefined;
+
+  //The `downHandler`
+  key.downHandler = (event) => {
+    if (event.key === key.value) {
+        key.press();
+    }
+    event.preventDefault();
+  };
+
+  //Attach event listeners
+  const downListener = key.downHandler.bind(key);
+  
+  window.addEventListener("keydown", downListener, false);
+  
+  // Detach event listeners
+  key.unsubscribe = () => {
+    window.removeEventListener("keydown", downListener);
   };
   
   return key;

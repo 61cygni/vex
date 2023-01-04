@@ -108,7 +108,7 @@ fontWeight : "bolder"
 function init_pixi_remote_hero(color) {
     const herosty = new PIXI.TextStyle({
 fontFamily: "Courier",
-fontSize: MAP_FONT_SIZE,
+fontSize: SCREEN.MAP_FONT_SIZE,
 fill: color,
 fontWeight : "bolder"
 });
