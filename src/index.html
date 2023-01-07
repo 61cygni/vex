@@ -13,9 +13,11 @@
     <script type="module" src="/title.js"></script>
     <script type="module">
 
+    import * as  Keyboard  from 'pixi.js-keyboard';
+
     import { vex_init_pixi} from "/screen.js";
     import { set_g_app_title, init_and_set_title} from "/title.js";
-    import { set_g_pixi_hero_map, set_initial_map, set_g_app_map} from "/map.js";
+    import { set_g_pixi_hero_map, set_initial_map, set_g_app_map, move_hero} from "/map.js";
     import { init_pixi_hero, set_g_pixi_hero_hero, set_g_app_hero} from "/hero.js";
 
     // PIXI global initialization. 
@@ -30,6 +32,19 @@
     document.body.appendChild(g_app.view);
 
     init_and_set_title(); // title screen will take it from here
+
+
+    // Start the game loop
+    g_app.ticker.add(delta => gameLoop(delta));
+
+    function gameLoop(delta){
+        // Update the current game state:
+        Keyboard.update();
+        move_hero();
+    }
+
+
+
 
   </script>
   </body>

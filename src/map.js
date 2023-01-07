@@ -1,9 +1,11 @@
 import { InternalConvexClient, ConvexHttpClient } from "convex/browser";
 import convexConfig from "../convex/_generated/clientConfig";
+
 import * as PIXI from 'pixi.js';
+import * as  Keyboard  from 'pixi.js-keyboard';
+
+
 import * as SCREEN from '/screen.js';
-
-
 import {set_initial_hero_in_db, update_hero, hero_reset_other_heros} from "/hero.js";
 
 
@@ -342,28 +344,28 @@ function map_xy_to_index(x,y){
 
 function set_pixi_key_hooks() {
     //Capture the keyboard arrow keys
-      const left = SCREEN.keyboard_press("ArrowLeft"),
-      up = SCREEN.keyboard_press("ArrowUp"),
-      right = SCREEN.keyboard_press("ArrowRight"),
-      down = SCREEN.keyboard_press("ArrowDown"),
-      keyh = SCREEN.keyboard_press("h"), // left
-      keyj = SCREEN.keyboard_press("j"), // down 
-      keyk = SCREEN.keyboard_press("k"), // up
-      keyl = SCREEN.keyboard_press("l"), // right
-      keyu = SCREEN.keyboard_once("u"), // go upstairs 
-      keyd = SCREEN.keyboard_once("d"); // go downstairs
+    //  const left = SCREEN.keyboard_press("ArrowLeft"),
+    //  up = SCREEN.keyboard_press("ArrowUp"),
+    //  right = SCREEN.keyboard_press("ArrowRight"),
+    //  down = SCREEN.keyboard_press("ArrowDown"),
+    //  keyh = SCREEN.keyboard_press("h"), // left
+    //  keyj = SCREEN.keyboard_press("j"), // down 
+    //  keyk = SCREEN.keyboard_press("k"), // up
+    //  keyl = SCREEN.keyboard_press("l"), // right
+    const keyu = SCREEN.keyboard_once("u"), // go upstairs 
+    keyd = SCREEN.keyboard_once("d"); // go downstairs
 
-      right.press = keyboard_once_right;
-      keyl.press  = keyboard_once_right;
+      //right.press = keyboard_once_right;
+      //keyl.press  = keyboard_once_right;
 
-      left.press = keyboard_once_left; 
-      keyh.press = keyboard_once_left; 
+      // left.press = keyboard_once_left; 
+      // keyh.press = keyboard_once_left; 
 
-      up.press   = keyboard_once_up; 
-      keyk.press = keyboard_once_up; 
+      //up.press   = keyboard_once_up; 
+      //keyk.press = keyboard_once_up; 
 
-      down.press = keyboard_once_down; 
-      keyj.press = keyboard_once_down; 
+      //down.press = keyboard_once_down; 
+      //keyj.press = keyboard_once_down; 
 
       keyd.press = () => { /// go down stairs!
         let map_index = map_xy_to_index(g_pixi_hero.map_x, g_pixi_hero.map_y); 
@@ -382,6 +384,31 @@ function set_pixi_key_hooks() {
             go_upstairs();
         }
       }
+}
+
+
+let last_time = Date.now();
+
+export function move_hero(){
+
+    let new_time = Date.now();
+    if ((new_time - last_time) > 150){
+        last_time = new_time;
+
+        if (Keyboard.isKeyDown('ArrowLeft', 'KeyH')){
+            keyboard_once_left();
+        }
+        if (Keyboard.isKeyDown('ArrowRight', 'KeyL')){
+            keyboard_once_right();
+        }
+        if (Keyboard.isKeyDown('ArrowUp', 'KeyK')){
+            keyboard_once_up();
+        }
+        if (Keyboard.isKeyDown('ArrowDown', 'KeyJ')){
+            keyboard_once_down();
+        }
+    }
+
 }
 
 function keyboard_once_right(){
