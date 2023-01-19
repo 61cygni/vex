@@ -1,6 +1,7 @@
 import { InternalConvexClient, ConvexHttpClient } from "convex/browser";
 import convexConfig from "../convex/_generated/clientConfig";
 
+import {game_screen_init_new_game, game_screen_init_join_game} from "/game_screen.js"
 import {set_initial_map, set_g_pixi_hero_map} from "/map.js"
 import {init_pixi_hero, set_g_pixi_hero_hero} from "/hero.js";
 
@@ -26,6 +27,10 @@ export function set_g_app_title(app) {
     g_app_title = app;
 }
 
+// --
+// Entry function which creates the primary title page and sets up the
+// mouse handlers for it.
+// --
 
 export function init_and_set_title() {
     const title_text_sty = new PIXI.TextStyle({
@@ -53,9 +58,9 @@ export function init_and_set_title() {
     pixi_title.x = title_x_offset;
     pixi_title.y = title_y_offset;
 
-    let subnew_x_offset = Math.floor((SCREEN.SCREEN_WIDTH - pixi_aggsub.width) / 2);
+    let subnew_x_offset  = Math.floor((SCREEN.SCREEN_WIDTH - pixi_aggsub.width) / 2);
     let subjoin_x_offset = subnew_x_offset + pixi_subnew.width; 
-    let subnew_y_offset = Math.floor((SCREEN.SCREEN_HEIGHT - (2*pixi_subnew.height)) / 2) + pixi_subnew.height;
+    let subnew_y_offset  = Math.floor((SCREEN.SCREEN_HEIGHT - (2*pixi_subnew.height)) / 2) + pixi_subnew.height;
 
     pixi_subnew.x = subnew_x_offset;
     pixi_subnew.y = subnew_y_offset;
@@ -65,7 +70,7 @@ export function init_and_set_title() {
     pixi_subnew.interactive = true;
     pixi_subjoin.interactive = true;
 
-    pixi_subnew.on('pointerdown', (event) => { new_clicked(); });
+    pixi_subnew.on ('pointerdown', (event) => { new_clicked(); });
     pixi_subjoin.on('pointerdown', (event) => { join_clicked(); });
 
     g_app_title.stage.addChild(pixi_title);
@@ -77,30 +82,25 @@ export function init_and_set_title() {
     //audio_play();
 }
 
+// --
+// Create a new game
+// --
+
 function init_new_game() {
-    set_initial_map(true); // generate new map
-
-    let pixi_hero = init_pixi_hero(1, "yellow"); // start hero on first level
-    set_g_pixi_hero_map(pixi_hero);
-    set_g_pixi_hero_hero(pixi_hero); // FIXME and just use local instance
-    g_app_title.stage.addChild(pixi_hero);
-
-
     g_app_title.stage.removeChild(pixi_title);
     g_app_title.stage.removeChild(pixi_subnew);
     g_app_title.stage.removeChild(pixi_subjoin);
+
+    game_screen_init_new_game();
 }
 
 function init_join_game() {
-    set_initial_map(false); // don't generate new map
-    let pixi_hero = init_pixi_hero(1, "yellow");
-    set_g_pixi_hero_map(pixi_hero);
-    set_g_pixi_hero_hero(pixi_hero); // FIXME and just use local instance
-    g_app_title.stage.addChild(pixi_hero);
 
     g_app_title.stage.removeChild(pixi_title);
     g_app_title.stage.removeChild(pixi_subnew);
     g_app_title.stage.removeChild(pixi_subjoin);
+
+    game_screen_init_join_game();
 }
 
 function hero_delete_success (id) {

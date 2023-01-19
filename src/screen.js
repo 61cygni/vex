@@ -2,10 +2,15 @@ import * as PIXI from 'pixi.js';
 
 export const MAP_FONT_SIZE    = 16; // px  
 
-export const MAP_WIDTH_CHAR   = 64;  
-export const MAP_HEIGHT_CHAR  = 40;
+export const VIEW_FRAME_WIDTH = 2; // frame around map view area 
+export const VIEW_WIDTH       = 800;
+export const VIEW_HEIGHT      = 600;
+export const MAP_WIDTH_CHAR   = 94;  
+export const MAP_HEIGHT_CHAR  = 94;
 export const SCREEN_WIDTH     = 1024; // px
 export const SCREEN_HEIGHT    = 768;
+
+export const HERO_WALK_BUFFER = 128; // buffer to edge before scrolling the map 
 
 // font widths in pixels. Figured out through trial and error .. so
 // clearly brittle 
@@ -26,7 +31,7 @@ export function set_map_y_offset(val){
 }
 
 // Position of main hero sidebar
-export const HERO_SIDEBAR_W = 128;
+export const HERO_SIDEBAR_W = 96;
 export const HERO_SIDEBAR_H = 64;
 export const HERO_SIDEBAR_X_OFFSET =  6; 
 export const HERO_SIDEBAR_Y_OFFSET = MAP_Y_OFFSET;

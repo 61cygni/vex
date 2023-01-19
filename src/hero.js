@@ -1,7 +1,7 @@
 import { InternalConvexClient, ConvexHttpClient } from "convex/browser";
 import convexConfig from "../convex/_generated/clientConfig";
 
-import {broadcast_msg, update_local_hero_px_loc, update_hero_px_loc, set_g_pixi_hero_map, display_local_msg} from "/map.js"
+import {map_center_on_hero, broadcast_msg, update_local_hero_px_loc, update_hero_px_loc, set_g_pixi_hero_map, display_local_msg} from "/map.js"
 
 import * as SCREEN from '/screen.js';
 
@@ -9,12 +9,15 @@ import * as PIXI from 'pixi.js';
 
 
 const hero_char   = "@";
-const INITIAL_HERO_HP = 100;
+const INITIAL_HERO_HP    = 100;
+const INITIAL_HERO_SPEED = 100;
+
 let other_heros = [];
 
 // pointers to globals
 let g_pixi_hero_hero      = null;
 let g_app_hero            = null;
+let world_container = null;
 
 // CONVEX global initialization
 const convexhttp_hero = new ConvexHttpClient(convexConfig);
@@ -92,9 +95,9 @@ fontWeight : "bolder"
     pixi_hero.interactive = true;
     pixi_hero.level       = level;
     pixi_hero._id = null; // will get ID from DB
-    pixi_hero.hp  = INITIAL_HERO_HP; 
-    pixi_hero.xp  = 0;
-
+    pixi_hero.hp    = INITIAL_HERO_HP; 
+    pixi_hero.speed = INITIAL_HERO_SPEED; 
+    pixi_hero.xp    = 0;
     
     internal_hero   = new InternalConvexClient(convexConfig, updatedQueries => reactive_update_hero(updatedQueries));
     const { queryTokenHero, unsubscribeHero } = internal_hero.subscribe("listHeros", [1]);
@@ -122,7 +125,9 @@ fontWeight : "bolder"
     return ph;
 }
 
-export function set_initial_hero_in_db() {
+export function set_initial_hero_in_db(container) {
+    world_container = container;
+
     console.log('[hero] Setting initial hero:' + g_pixi_hero_hero.text + " : " + g_pixi_hero_hero.map_x);
     const res = convexhttp_hero.mutation("createHero")(g_pixi_hero_hero.text, g_pixi_hero_hero.map_x, g_pixi_hero_hero.map_y);
     res.then(initial_hero_update_success, hero_update_failure);
@@ -158,10 +163,13 @@ function initial_hero_update_success (id) {
     console.log("Successfully updated initial hero "+id+" : " + g_pixi_hero_hero.map_x);
     g_pixi_hero_hero._id = id;
     set_g_pixi_hero_map(g_pixi_hero_hero);
+    map_center_on_hero();
     update_hero_px_loc(true);
     
     // At this point can safely assume map has been drawn, and hero too
     broadcast_msg(id, "a new hero entered dungeon!", ""+id);
+
+    // update_hero_px_loc(false);
 
 
     list_heros_from_db();
@@ -233,7 +241,7 @@ function list_hero_query_success(m) {
             new_local.map_y = db_hero.y;
             new_other_hero.push(new_local);
             update_local_hero_px_loc(new_local);
-            g_app_hero.stage.addChild(new_local);
+            world_container.addChild(new_local);
         }
     }
 
