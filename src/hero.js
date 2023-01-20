@@ -188,7 +188,6 @@ function list_heros_from_db(){
 }
 
 export function hero_reset_other_heros(){
-    console.log("XXXXXX REMOVING"); 
     for(let i = 0; i < other_heros.length; i++){
         console.log("Removing other hero "+other_heros[i]._id);
         g_app_hero.stage.removeChild(other_heros[i]);

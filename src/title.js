@@ -125,7 +125,7 @@ function list_hero_query_success(m) {
         init_new_game();
         return;
     }
-    
+
     for(let i = 0; i < m.length; i++){
         console.log("[title] deleting "+m[i]._id);
         const res = convexhttp_title.mutation("deleteHero")(m[i]._id);
@@ -137,12 +137,24 @@ function list_hero_query_failure () {
     console.log("[title] failed to list heros");
 }
 
+function delete_all_maps_success () {
+    console.log("[title] all maps deleted!");
+}
+
+function delete_all_maps_failure () {
+    console.log("[title] failed to delete maps!");
+}
+
 function new_clicked() {
     console.log("New game");
 
+    const delmap = convexhttp_title.mutation("deleteAllMaps")(); 
+    delmap.then(delete_all_maps_success, delete_all_maps_failure);
+
     // use 0 to list all heros and delete them
-    const val = convexhttp_title.query("listHeros")(0); 
-    val.then(list_hero_query_success, list_hero_query_failure);
+    const lhero = convexhttp_title.query("listHeros")(0); 
+    lhero.then(list_hero_query_success, list_hero_query_failure);
+
 }
 
 function join_clicked() {

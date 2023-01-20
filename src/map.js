@@ -164,6 +164,8 @@ function create_ds_update_success(map){
         console.log(cur_map);
         pixi_draw_map();
         update_hero_px_loc(true);
+        map_center_on_hero();
+        update_hero_px_loc(true);
         broadcast_msg(g_pixi_hero._id, "Someone has entered level "+g_pixi_hero.level, ""+g_pixi_hero._id);
     }
     return downstairs_map_update_success;
@@ -185,6 +187,8 @@ function create_downstairs_success_func(l) {
             g_pixi_hero.level++;
             hero_reset_other_heros();
             pixi_draw_map();
+            update_hero_px_loc(true);
+            map_center_on_hero();
             update_hero_px_loc(true);
             broadcast_msg(g_pixi_hero._id, "Someone has entered level "+g_pixi_hero.level, ""+g_pixi_hero._id);
         }
@@ -227,6 +231,9 @@ function create_upstairs_success_func(l) {
             hero_reset_other_heros();
             pixi_draw_map();
             update_hero_px_loc(true);
+            map_center_on_hero();
+            update_hero_px_loc(true);
+            broadcast_msg(g_pixi_hero._id, "Someone has entered level "+g_pixi_hero.level, ""+g_pixi_hero._id);
         }
     }
     return go_upstairs_query_success;
@@ -318,10 +325,6 @@ function pixi_draw_map() {
       SCREEN.set_map_x_offset( Math.floor((SCREEN.SCREEN_WIDTH - pixi_map.width) / 2));
       SCREEN.set_map_y_offset(SCREEN.FONT_PIXEL_H); // magic! 
 
-
-      // pixi_map.x = SCREEN.MAP_X_OFFSET;
-      // pixi_map.y = SCREEN.MAP_Y_OFFSET;
-
       // create a black background
       let textbg = new PIXI.Graphics();
       textbg.beginFill(0);
@@ -345,15 +348,14 @@ function pixi_draw_map() {
 
 export function map_center_on_hero() {
       let global_pos = g_pixi_hero.toGlobal(new PIXI.Point(0,0));
+
       console.log("Placed hero at global : "+global_pos.x+","+global_pos.y+")");
       let x_off = 0;
       let y_off = 0;
-      if (global_pos.x > SCREEN.SCREEN_WIDTH/2){
-        x_off = global_pos.x - SCREEN.SCREEN_WIDTH/2;
-      }
-      if (global_pos.y > SCREEN.SCREEN_HEIGHT/2){
-        y_off = global_pos.y - SCREEN.SCREEN_HEIGHT/2;
-      }
+
+      x_off = global_pos.x - SCREEN.SCREEN_WIDTH/2;
+      y_off = global_pos.y - SCREEN.SCREEN_HEIGHT/2;
+
       console.log("Adjusting map : "+x_off+","+y_off+")");
       pixi_map.x -= x_off;
       pixi_map.y -= y_off;
@@ -380,7 +382,6 @@ function set_pixi_key_hooks() {
           console.log("[map] heading downstairs!");
           console.log("[map] Hero is currently on level "+g_pixi_hero.level);
           go_downstairs();
-          //set_new_map();
       }
     }
     keyu.press = () => { /// go up stairs!
@@ -406,7 +407,6 @@ export function move_hero(){
     if ((new_time - last_time) > g_pixi_hero.speed){
         last_time = new_time;
 
-
         if (Keyboard.isKeyDown('ArrowLeft', 'KeyH')){
             keyboard_once_left();
         }
@@ -420,22 +420,6 @@ export function move_hero(){
             keyboard_once_down();
         }
 
-        if (Keyboard.isKeyDown('KeyA')){
-            pixi_map.x += 15;
-            update_hero_px_loc(true);
-        }
-        if (Keyboard.isKeyDown('KeyS')){
-            pixi_map.x -= 15;
-            update_hero_px_loc(true);
-        }
-        if (Keyboard.isKeyDown('KeyD')){
-            pixi_map.y += 15;
-            update_hero_px_loc(true);
-        }
-        if (Keyboard.isKeyDown('KeyF')){
-            pixi_map.y -= 15;
-            update_hero_px_loc(true);
-        }
     }
 
 }

@@ -5,8 +5,10 @@ export const MAP_FONT_SIZE    = 16; // px
 export const VIEW_FRAME_WIDTH = 2; // frame around map view area 
 export const VIEW_WIDTH       = 800;
 export const VIEW_HEIGHT      = 600;
-export const MAP_WIDTH_CHAR   = 94;  
-export const MAP_HEIGHT_CHAR  = 94;
+export const MAP_WIDTH_CHAR   = 80;  
+export const MAP_HEIGHT_CHAR  = 60;
+// export const MAP_WIDTH_CHAR   = 94;  
+// export const MAP_HEIGHT_CHAR  = 94;
 export const SCREEN_WIDTH     = 1024; // px
 export const SCREEN_HEIGHT    = 768;
 
