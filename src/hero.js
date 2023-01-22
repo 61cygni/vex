@@ -1,7 +1,7 @@
 import { InternalConvexClient, ConvexHttpClient } from "convex/browser";
 import convexConfig from "../convex/_generated/clientConfig";
 
-import {map_center_on_hero, broadcast_msg, update_local_hero_px_loc, update_hero_px_loc, set_g_pixi_hero_map, display_local_msg} from "/map.js"
+import * as MAP from "/map.js"
 
 import * as SCREEN from '/screen.js';
 
@@ -15,9 +15,10 @@ const INITIAL_HERO_SPEED = 100;
 let other_heros = [];
 
 // pointers to globals
-let g_pixi_hero_hero      = null;
-let g_app_hero            = null;
-let world_container = null;
+let g_pixi_hero_hero = null;
+let g_app_hero       = null;
+let world_container  = null;
+let unsubscribe_hero = null;
 
 // CONVEX global initialization
 const convexhttp_hero = new ConvexHttpClient(convexConfig);
@@ -100,7 +101,6 @@ fontWeight : "bolder"
     pixi_hero.xp    = 0;
     
     internal_hero   = new InternalConvexClient(convexConfig, updatedQueries => reactive_update_hero(updatedQueries));
-    const { queryTokenHero, unsubscribeHero } = internal_hero.subscribe("listHeros", [1]);
 
     init_hero_sidebar();
     
@@ -134,8 +134,6 @@ export function set_initial_hero_in_db(container) {
 }
 
 // --
-// <UPDATE_HERO>
-//
 // Push current hero state to convex 
 // --
 
@@ -148,29 +146,26 @@ export function update_hero() {
     res.then(hero_update_success, hero_update_failure);
 }
 function hero_update_success () {
-    console.log("Successfully updated initial hero");
+    //console.log("Successfully updated initial hero");
 }
 function hero_update_failure () {
     console.log("Failed to update initial hero");
 }
 
-// --
-// </UPDATE_HERO>
-// --
-
-
 function initial_hero_update_success (id) {
     console.log("Successfully updated initial hero "+id+" : " + g_pixi_hero_hero.map_x);
     g_pixi_hero_hero._id = id;
-    set_g_pixi_hero_map(g_pixi_hero_hero);
-    map_center_on_hero();
+    MAP.set_g_pixi_hero_map(g_pixi_hero_hero);
+    MAP.map_center_on_hero();
     update_hero_px_loc(true);
-    
+
+    // get notified whenever listHerosNotMe changes (a new hero enters,
+    // or another hero moves)
+    const {queryTokenHero, unsubscribe} = internal_hero.subscribe("listHerosNotMe", [id, 1]);
+    unsubscribe_hero = unsubscribe;
+
     // At this point can safely assume map has been drawn, and hero too
-    broadcast_msg(id, "a new hero entered dungeon!", ""+id);
-
-    // update_hero_px_loc(false);
-
+    MAP.broadcast_msg(id, "a new hero entered dungeon!", ""+id);
 
     list_heros_from_db();
 }
@@ -181,19 +176,28 @@ function initial_hero_update_success (id) {
 // Once received update local and remote heros
 // --
 function list_heros_from_db(){
-    console.log('[hero] list_heros_from_db'); 
+    console.log('[hero] list_heros_from_db ' + ""+g_pixi_hero_hero._id); 
 
-    const val = convexhttp_hero.query("listHeros")(g_pixi_hero_hero.level);
+    const val = convexhttp_hero.query("listHerosNotMe")(g_pixi_hero_hero._id, g_pixi_hero_hero.level);
     val.then(list_hero_query_success, list_hero_query_failure);
 }
 
-export function hero_reset_other_heros(){
+export function hero_change_level(new_level){
+
+    console.log("[hero] changing to new level "+new_level); 
+
+    unsubscribe_hero();
+    unsubscribe_hero = null;
+    const {queryTokenHero, unsubscribe} = internal_hero.subscribe("listHerosNotMe", [g_pixi_hero_hero._id, new_level]);
+    unsubscribe_hero = unsubscribe;
+
     for(let i = 0; i < other_heros.length; i++){
         console.log("Removing other hero "+other_heros[i]._id);
         g_app_hero.stage.removeChild(other_heros[i]);
     }
     other_heros = [];
 }
+
 
 function list_hero_query_success(m) {
     console.log("Successfully retrieved heros ");
@@ -222,7 +226,6 @@ function list_hero_query_success(m) {
                 console.log(other_heros[j]);
                 other_heros[j].map_x = db_hero.x;
                 other_heros[j].map_y = db_hero.y;
-                update_local_hero_px_loc(other_heros[j]);
 
                 // save this hero
                 new_other_hero.push(other_heros[j]);
@@ -239,7 +242,6 @@ function list_hero_query_success(m) {
             new_local.map_x = db_hero.x;
             new_local.map_y = db_hero.y;
             new_other_hero.push(new_local);
-            update_local_hero_px_loc(new_local);
             world_container.addChild(new_local);
         }
     }
@@ -249,13 +251,43 @@ function list_hero_query_success(m) {
         g_app_hero.stage.removeChild(other_heros[i]);
     }
     other_heros = new_other_hero;
+
+    update_hero_px_loc(false); // will update screen locations for all other
 }
+
+// --
+// update_hero_px_loc(..)
+//
+// Map from map coordinates to screen coordinates. 
+//
+// --
+
+export function update_hero_px_loc(push){
+    let px_loc = MAP.map_map_index_to_pixel(g_pixi_hero_hero.map_x, g_pixi_hero_hero.map_y);
+    g_pixi_hero_hero.x = px_loc[0];
+    g_pixi_hero_hero.y = px_loc[1];
+
+    for(let j = 0; j < other_heros.length; j++){
+        let px_loc = MAP.map_map_index_to_pixel(other_heros[j].map_x, other_heros[j].map_y);
+        other_heros[j].x = px_loc[0];
+        other_heros[j].y = px_loc[1];
+    }
+
+    if(push == true){
+        update_hero();
+    }
+
+
+}
+
 
 function list_hero_query_failure () {
     console.log("Failed to retrieve hero");
 }
 
 function reactive_update_hero (updatedQueries) {
-    console.log("Change to hero!");
+    if(updatedQueries == ""){
+        return;
+    }
     list_heros_from_db();
 }

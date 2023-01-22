@@ -6,7 +6,7 @@ import * as  Keyboard  from 'pixi.js-keyboard';
 
 
 import * as SCREEN from '/screen.js';
-import {set_initial_hero_in_db, update_hero, hero_reset_other_heros} from "/hero.js";
+import * as HERO from  "/hero.js";
 
 
 const convexhttp_map    = new ConvexHttpClient(convexConfig);
@@ -160,12 +160,12 @@ function create_ds_update_success(map){
         cur_map = map;
         g_pixi_hero.level++;
 
-        hero_reset_other_heros();
+        HERO.hero_change_level(g_pixi_hero.level);
         console.log(cur_map);
         pixi_draw_map();
-        update_hero_px_loc(true);
+        HERO.update_hero_px_loc(true);
         map_center_on_hero();
-        update_hero_px_loc(true);
+        HERO.update_hero_px_loc(true);
         broadcast_msg(g_pixi_hero._id, "Someone has entered level "+g_pixi_hero.level, ""+g_pixi_hero._id);
     }
     return downstairs_map_update_success;
@@ -185,11 +185,11 @@ function create_downstairs_success_func(l) {
             console.log("[map] successfully queried map for level "+new_level);
             cur_map = ret;
             g_pixi_hero.level++;
-            hero_reset_other_heros();
+            HERO.hero_change_level(g_pixi_hero.level);
             pixi_draw_map();
-            update_hero_px_loc(true);
+            HERO.update_hero_px_loc(true);
             map_center_on_hero();
-            update_hero_px_loc(true);
+            HERO.update_hero_px_loc(true);
             broadcast_msg(g_pixi_hero._id, "Someone has entered level "+g_pixi_hero.level, ""+g_pixi_hero._id);
         }
     }
@@ -228,11 +228,11 @@ function create_upstairs_success_func(l) {
             console.log("[map] upstairs successfully queried map for level "+new_level);
             cur_map = ret;
             g_pixi_hero.level--;
-            hero_reset_other_heros();
+            HERO.hero_change_level(g_pixi_hero.level);
             pixi_draw_map();
-            update_hero_px_loc(true);
+            HERO.update_hero_px_loc(true);
             map_center_on_hero();
-            update_hero_px_loc(true);
+            HERO.update_hero_px_loc(true);
             broadcast_msg(g_pixi_hero._id, "Someone has entered level "+g_pixi_hero.level, ""+g_pixi_hero._id);
         }
     }
@@ -284,33 +284,15 @@ export function set_initial_map(new_map, container) {
 }
 
 
-function map_map_index_to_pixel(x, y){
+export function map_map_index_to_pixel(x, y){
     // It seems characters are offset by a pixel every 4 pixels .. so
     let fudge = .6;
     let px_x  =  (x * SCREEN.FONT_PIXEL_W) + Math.floor(fudge*x) + pixi_map.x;
-    //let px_x  = SCREEN.MAP_X_OFFSET + (x * SCREEN.FONT_PIXEL_W) + Math.floor(fudge*x);
     let px_y  =  (y * SCREEN.FONT_PIXEL_H) + pixi_map.y;
-    //let px_y  = SCREEN.MAP_Y_OFFSET + (y * SCREEN.FONT_PIXEL_H);
     return [px_x,px_y];
 }
 
 
-export function update_hero_px_loc(push){
-    let px_loc = map_map_index_to_pixel(g_pixi_hero.map_x, g_pixi_hero.map_y);
-    g_pixi_hero.x = px_loc[0];
-    g_pixi_hero.y = px_loc[1];
-    console.log("hero x "+g_pixi_hero.map_x+" : hero y "+g_pixi_hero.map_y);
-    if(push == true){
-        update_hero();
-    }
-}
-
-export function update_local_hero_px_loc(local_hero){
-    let px_loc = map_map_index_to_pixel(local_hero.map_x, local_hero.map_y);
-    local_hero.x = px_loc[0];
-    local_hero.y = px_loc[1];
-    console.log("local hero x "+g_pixi_hero.map_x+" : local hero y "+g_pixi_hero.map_y);
-}
 
 function pixi_draw_map() {
 
@@ -434,14 +416,14 @@ function keyboard_once_right(){
 
         // if we step out of the bounding box, move map instead of hero
         let old_screen_x = g_pixi_hero.x;
-        update_hero_px_loc(false);
+        HERO.update_hero_px_loc(false);
         let global_pos = g_pixi_hero.toGlobal(new PIXI.Point(0,0));
         let map_buffer = SCREEN.SCREEN_WIDTH - (SCREEN.SCREEN_WIDTH - SCREEN.VIEW_WIDTH)/2 - SCREEN.HERO_WALK_BUFFER; 
         if(global_pos.x > map_buffer){
             let delta = g_pixi_hero.x - old_screen_x;
             pixi_map.x -= delta;
         }
-        update_hero_px_loc(true);
+        HERO.update_hero_px_loc(true);
     }
 }
 function keyboard_once_left(){
@@ -455,7 +437,7 @@ function keyboard_once_left(){
 
         // if we step out of the bounding box, move map instead of hero
         let old_screen_x = g_pixi_hero.x;
-        update_hero_px_loc(false);
+        HERO.update_hero_px_loc(false);
         let global_pos = g_pixi_hero.toGlobal(new PIXI.Point(0,0));
         let map_buffer = (SCREEN.SCREEN_WIDTH - SCREEN.VIEW_WIDTH)/2 + SCREEN.HERO_WALK_BUFFER; 
         if(global_pos.x < map_buffer){ 
@@ -463,7 +445,7 @@ function keyboard_once_left(){
             pixi_map.x += delta;
         }
 
-        update_hero_px_loc(true);
+        HERO.update_hero_px_loc(true);
     }
 }
 function keyboard_once_up(){
@@ -476,7 +458,7 @@ function keyboard_once_up(){
 
         // if we step out of the bounding box, move map instead of hero
         let old_screen_y = g_pixi_hero.y;
-        update_hero_px_loc(false);
+        HERO.update_hero_px_loc(false);
         let global_pos = g_pixi_hero.toGlobal(new PIXI.Point(0,0));
         let map_buffer = (SCREEN.SCREEN_HEIGHT - SCREEN.VIEW_HEIGHT)/2 + SCREEN.HERO_WALK_BUFFER; 
         if(global_pos.y < map_buffer){ 
@@ -484,7 +466,7 @@ function keyboard_once_up(){
             pixi_map.y += delta;
         }
 
-        update_hero_px_loc(true);
+        HERO.update_hero_px_loc(true);
     }
 }
 function keyboard_once_down(){
@@ -497,7 +479,7 @@ function keyboard_once_down(){
 
         // if we step out of the bounding box, move map instead of hero
         let old_screen_y = g_pixi_hero.y;
-        update_hero_px_loc(false);
+        HERO.update_hero_px_loc(false);
         let global_pos = g_pixi_hero.toGlobal(new PIXI.Point(0,0));
         let map_buffer = SCREEN.SCREEN_HEIGHT - (SCREEN.SCREEN_HEIGHT - SCREEN.VIEW_HEIGHT)/2 - SCREEN.HERO_WALK_BUFFER; 
         if(global_pos.y > map_buffer){ // XXX Picked an arbitrary boundry for dev
@@ -505,18 +487,8 @@ function keyboard_once_down(){
             pixi_map.y -= delta;
         }
 
-        update_hero_px_loc(true);
+        HERO.update_hero_px_loc(true);
     }
-}
-
-//--
-// keyboard Hooks!
-//--
-
-
-function gameLoop(delta) {
-
-  
 }
 
 function initial_map_query_success(m) {
@@ -526,9 +498,9 @@ function initial_map_query_success(m) {
     pixi_draw_map();
 
     display_local_msg("Welcome hero!"); 
-    update_hero_px_loc(false);
+    HERO.update_hero_px_loc(false);
 
-    set_initial_hero_in_db(world_container);
+    HERO.set_initial_hero_in_db(world_container);
 }
 
 function map_query_success(m) {
