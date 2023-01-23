@@ -199,6 +199,12 @@ export function hero_change_level(new_level){
 }
 
 
+// --
+// list_hero_query_success
+//
+// Callback on successful query for all heros on a given level. Used to
+// updated all remote hero locations on the map
+// --
 function list_hero_query_success(m) {
     console.log("Successfully retrieved heros ");
     console.log(m);
@@ -209,21 +215,22 @@ function list_hero_query_success(m) {
         let found_local = false;
         let db_hero = m[i];
         if(""+db_hero._id == ""+g_pixi_hero_hero._id){
-            console.log("found our hero, ignoring!");
-            // nothing to do here since we're the source of truth
-            // for the local hero
+            console.log("[hero] **ERROR** found our hero on listHerosNotMe");
             continue;
         }
+
+        if(db_hero.level != g_pixi_hero_hero.level){
+            console.log("[hero] **ERROR** listHerosNotMe returned hero on another level  "+db_hero.level);
+            continue;
+        }
+
+        // FIXME: this would be faster with a hash map / dict
         // look whether we know about this hero
         for(let j = 0; j < other_heros.length; j++){
-            if(""+db_hero._id == ""+other_heros[j]._id){
-                if(db_hero.level != g_pixi_hero_hero.level){
-                    console.log("Removing other hero at different level "+db_hero.level);
-                    continue;
-                }
+
+            if(""+db_hero._id == ""+other_heros[j]._id){ // alredy known
                 found_local = true;
-                console.log("found local hero!: "+db_hero._id);
-                console.log(other_heros[j]);
+
                 other_heros[j].map_x = db_hero.x;
                 other_heros[j].map_y = db_hero.y;
 
@@ -233,10 +240,7 @@ function list_hero_query_success(m) {
             }
         }
         if(!found_local){
-            if(db_hero.level != g_pixi_hero_hero.level){
-                continue;
-            }
-            console.log("[hero] new remote hero: "+db_hero._id);
+            console.log("[hero] found new remote hero: "+db_hero._id);
             let new_local = init_pixi_remote_hero("red");
             new_local._id = db_hero._id;
             new_local.map_x = db_hero.x;
@@ -248,7 +252,7 @@ function list_hero_query_success(m) {
 
     // remove all stale heros
     for(let i = 0; i < other_heros.length; i++){
-        g_app_hero.stage.removeChild(other_heros[i]);
+        world_container.removeChild(other_heros[i]);
     }
     other_heros = new_other_hero;
 
