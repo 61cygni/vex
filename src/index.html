@@ -15,6 +15,9 @@
     <script type="module">
 
     import * as  Keyboard  from 'pixi.js-keyboard';
+    import * as  Mouse     from 'pixi.js-mouse';
+
+     import * as SOUND from '/sound.js';
 
     import { vex_init_pixi} from "/screen.js";
     import { set_g_app_title, init_and_set_title} from "/title.js";
@@ -43,6 +46,7 @@
     function gameLoop(delta){
         // Update the current game state:
         Keyboard.update();
+        Mouse.update();
         move_hero();
     }
 

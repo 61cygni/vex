@@ -8,6 +8,7 @@
     "serve": "vite preview src/"
   },
   "dependencies": {
+    "@pixi/sound": "^5.0.0",
     "bootstrap": "^5.0.2",
     "convex": "^0.6.0",
     "node-getopt": "^0.3.2",

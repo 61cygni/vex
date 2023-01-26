@@ -8,6 +8,8 @@ import {init_pixi_hero, set_g_pixi_hero_hero} from "/hero.js";
 import * as PIXI   from 'pixi.js';
 import * as SCREEN from '/screen.js';
 
+import * as SOUND from '/sound.js';
+
 // CONVEX global initialization
 const convexhttp_title = new ConvexHttpClient(convexConfig);
 
@@ -57,6 +59,7 @@ export function init_and_set_title() {
     let title_y_offset = Math.floor((SCREEN.SCREEN_HEIGHT - (2*pixi_title.height)) / 2);
     pixi_title.x = title_x_offset;
     pixi_title.y = title_y_offset;
+    pixi_title.interactive = true;
 
     let subnew_x_offset  = Math.floor((SCREEN.SCREEN_WIDTH - pixi_aggsub.width) / 2);
     let subjoin_x_offset = subnew_x_offset + pixi_subnew.width; 
@@ -70,6 +73,7 @@ export function init_and_set_title() {
     pixi_subnew.interactive = true;
     pixi_subjoin.interactive = true;
 
+    pixi_title.on  ('pointerdown', (event) => { vex_clicked(); });
     pixi_subnew.on ('pointerdown', (event) => { new_clicked(); });
     pixi_subjoin.on('pointerdown', (event) => { join_clicked(); });
 
@@ -79,7 +83,7 @@ export function init_and_set_title() {
 
     console.log("[title] Title initialized");
 
-    //audio_play();
+
 }
 
 // --
@@ -145,8 +149,19 @@ function delete_all_maps_failure () {
     console.log("[title] failed to delete maps!");
 }
 
+// --
+// --
+
+async function vex_clicked() {
+
+}
+
 function new_clicked() {
     console.log("New game");
+
+    SOUND.load_sounds();
+    SOUND.play_confirm();
+
 
     const delmap = convexhttp_title.mutation("deleteAllMaps")(); 
     delmap.then(delete_all_maps_success, delete_all_maps_failure);
@@ -159,6 +174,9 @@ function new_clicked() {
 
 function join_clicked() {
     console.log("Join game");
+
+    SOUND.load_sounds();
+    SOUND.play_confirm();
 
     init_join_game();
 }

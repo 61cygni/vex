@@ -5,8 +5,9 @@ import * as PIXI from 'pixi.js';
 import * as  Keyboard  from 'pixi.js-keyboard';
 
 
-import * as SCREEN from '/screen.js';
-import * as HERO from  "/hero.js";
+import  * as SCREEN from '/screen.js';
+import  * as HERO from  "/hero.js";
+import * as SOUND from '/sound.js';
 
 
 const convexhttp_map    = new ConvexHttpClient(convexConfig);
@@ -204,6 +205,7 @@ function go_downstairs(){
     let new_level = g_pixi_hero.level + 1;
     const val = convexhttp_map.query("getMap")(new_level);
     val.then(create_downstairs_success_func(new_level), go_downstairs_query_fail);
+    SOUND.play_heartbeat();
 }
 
 function go_downstairs_query_fail(ret){

@@ -8,6 +8,7 @@ Things to install:
 %npm install pixi.jas
 %npm install --save pixi.js-keyboard pixi.js-mouse
 %npm install convex 
+%npm i @pixi/sound --save
 
 # run local vite webserver
 % npm run dev
