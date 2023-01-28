@@ -13,6 +13,12 @@ import * as SOUND from '/sound.js';
 const convexhttp_map    = new ConvexHttpClient(convexConfig);
 let   convex_internal_msg = null; 
 
+const MapDirection = {
+	Upstairs: Symbol("upstairs"),
+	Downstairs: Symbol("downstairs"),
+	Random: Symbol("random")
+}
+
 
 // pointers to globals
 let g_app_map       = null;
@@ -118,6 +124,10 @@ export function display_local_msg(body, color = "red", timeout = 3000){
 }
 
 function reactive_msg_update (updatedQueries) {
+    if(updatedQueries == ""){
+        return;
+    }
+
     console.log("Change to messages!");
 
     // get last message 
@@ -164,6 +174,7 @@ function create_ds_update_success(map){
         HERO.hero_change_level(g_pixi_hero.level);
         console.log(cur_map);
         pixi_draw_map();
+        map_set_hero_loc(MapDirection.Downstairs);
         HERO.update_hero_px_loc(true);
         map_center_on_hero();
         HERO.update_hero_px_loc(true);
@@ -188,6 +199,7 @@ function create_downstairs_success_func(l) {
             g_pixi_hero.level++;
             HERO.hero_change_level(g_pixi_hero.level);
             pixi_draw_map();
+            map_set_hero_loc(MapDirection.Downstairs);
             HERO.update_hero_px_loc(true);
             map_center_on_hero();
             HERO.update_hero_px_loc(true);
@@ -232,6 +244,7 @@ function create_upstairs_success_func(l) {
             g_pixi_hero.level--;
             HERO.hero_change_level(g_pixi_hero.level);
             pixi_draw_map();
+            map_set_hero_loc(MapDirection.Upstairs);
             HERO.update_hero_px_loc(true);
             map_center_on_hero();
             HERO.update_hero_px_loc(true);
@@ -295,6 +308,51 @@ export function map_map_index_to_pixel(x, y){
 }
 
 
+function map_set_hero_loc(dir) {
+
+    if(dir === MapDirection.Downstairs){
+        // Look for upstairs char. If we find it, place hero just to the
+        // right
+        let upst_index = cur_map.indexOf(UP_CHAR);
+        if(upst_index === -1){
+            console.log("[map] **ERROR** going downstairs can cannot find upstairs char");
+            return;
+        }
+        let loc = upst_index + 1;
+        g_pixi_hero.map_y = Math.floor(loc / (SCREEN.MAP_WIDTH_CHAR+1));
+        g_pixi_hero.map_x = loc - (g_pixi_hero.map_y * (SCREEN.MAP_WIDTH_CHAR+1)); 
+    }
+
+    else if(dir === MapDirection.Upstairs){
+        // Look for upstairs char. If we find it, place hero just to the
+        // right
+        let upst_index = cur_map.indexOf(DOWN_CHAR);
+        if(upst_index === -1){
+            constole.log("[map] **ERROR** going upstairs can cannot find downstairs char");
+            return;
+        }
+        let loc = upst_index + 1;
+        g_pixi_hero.map_y = Math.floor(loc / (SCREEN.MAP_WIDTH_CHAR+1));
+        g_pixi_hero.map_x = loc - (g_pixi_hero.map_y * (SCREEN.MAP_WIDTH_CHAR+1)); 
+    }
+
+
+    else if(dir === MapDirection.Random){
+        let map_size = (SCREEN.MAP_WIDTH_CHAR+1) * SCREEN.MAP_HEIGHT_CHAR; 
+        let loc = 0; 
+        while(pixi_map.text[loc] != ' '){
+            loc = Math.floor(Math.random() * map_size);
+            g_pixi_hero.map_y = Math.floor(loc / (SCREEN.MAP_WIDTH_CHAR+1));
+            g_pixi_hero.map_x = loc - (g_pixi_hero.map_y * (SCREEN.MAP_WIDTH_CHAR+1)); 
+        }
+    }
+
+    else {
+        console.log("[map] **ERROR** map_set_hero_loc() unknown direction");
+    }
+
+}
+
 
 function pixi_draw_map() {
 
@@ -317,17 +375,6 @@ function pixi_draw_map() {
 	  world_container.addChild(textbg);
 	  world_container.addChild(pixi_map);
       world_container.addChild(g_pixi_hero);
-	  //g_app_map.stage.addChild(pixi_map);
-
-      // choose a random location for the hero
-      let map_size = (SCREEN.MAP_WIDTH_CHAR+1) * SCREEN.MAP_HEIGHT_CHAR; 
-      let loc = 0; 
-      while(pixi_map.text[loc] != ' '){
-          loc = Math.floor(Math.random() * map_size);
-          g_pixi_hero.map_y = Math.floor(loc / (SCREEN.MAP_WIDTH_CHAR+1));
-          g_pixi_hero.map_x = loc - (g_pixi_hero.map_y * (SCREEN.MAP_WIDTH_CHAR+1)); 
-      }
-
 }
 
 export function map_center_on_hero() {
@@ -497,7 +544,10 @@ function initial_map_query_success(m) {
     console.log("Successfully retrieved map ");
     cur_map = m;
     console.log(cur_map);
+    
+
     pixi_draw_map();
+    map_set_hero_loc(MapDirection.Random);
 
     display_local_msg("Welcome hero!"); 
     HERO.update_hero_px_loc(false);
@@ -510,6 +560,7 @@ function map_query_success(m) {
     cur_map = m;
     console.log(cur_map);
     pixi_draw_map();
+    map_set_hero_loc(MapDirection.Random);
 }
 
 function map_query_failure () {
