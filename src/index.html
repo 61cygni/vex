@@ -8,50 +8,15 @@
   <body>
     <div id="root"></div>
 
-    <script type="module" src="/map.js"></script>
-    <script type="module" src="/hero.js"></script>
-    <script type="module" src="/title.js"></script>
-    <script type="module" src="/game_screen.js"></script>
+    <script type="module" src="/vex.js"></script>
     <script type="module">
 
-    import * as  Keyboard  from 'pixi.js-keyboard';
-    import * as  Mouse     from 'pixi.js-mouse';
+    import * as VEX from '/vex.js';
 
-     import * as SOUND from '/sound.js';
-
-    import { vex_init_pixi} from "/screen.js";
-    import { set_g_app_title, init_and_set_title} from "/title.js";
-    import { set_g_app_game_screen} from "/game_screen.js";
-    import { set_g_app_map, move_hero} from "/map.js";
-    import { set_g_app_hero} from "/hero.js";
-
-    // PIXI global initialization. 
-    const g_app = vex_init_pixi(); // defined in /screen.js 
-    console.log("[index] PIXI initialized"); 
-
-    set_g_app_map(g_app);
-    set_g_app_hero(g_app);
-    set_g_app_title(g_app);
-    set_g_app_game_screen(g_app);
-
+    const g_app = VEX.vex_init(); 
     // //Add the canvas that Pixi automatically created for you to the HTML document
     document.body.appendChild(g_app.view);
-
-    init_and_set_title(); // title screen will take it from here
-
-
-    // Start the game loop
-    g_app.ticker.add(delta => gameLoop(delta));
-
-    function gameLoop(delta){
-        // Update the current game state:
-        Keyboard.update();
-        Mouse.update();
-        move_hero();
-    }
-
-
-
+    VEX.vex(g_app);
 
   </script>
   </body>
